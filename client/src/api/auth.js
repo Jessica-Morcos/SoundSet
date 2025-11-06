@@ -1,0 +1,46 @@
+const BASE_URL = "http://localhost:3000/api";
+
+export async function loginUser(credentials) {
+  try {
+    const res = await fetch(`${BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(credentials),
+    });
+    return await res.json();
+  } catch (err) {
+    console.error("Login error:", err);
+    return { message: "Login failed" };
+  }
+}
+export async function registerUser(data) {
+  try {
+    const res = await fetch(`${BASE_URL}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    return await res.json();
+  } catch (err) {
+    console.error("Register error:", err);
+    return { message: "Registration failed" };
+  }
+}
+
+export async function getCurrentUser() {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await fetch("http://localhost:3000/api/auth/me", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!res.ok) {
+      throw new Error("Failed to fetch user");
+    }
+    return await res.json();
+  } catch (err) {
+    console.error("Error fetching current user:", err);
+    return null;
+  }
+}
