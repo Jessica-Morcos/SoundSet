@@ -1,5 +1,6 @@
 // src/api/songs.js
-const BASE_URL = "http://localhost:3000/api/songs";
+const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/songs`;
+
 
 export async function getAllSongs(token) {
   try {
