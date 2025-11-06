@@ -1,4 +1,5 @@
-const BASE_URL = "https://soundset-server.onrender.com/api";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 
 export async function loginUser(credentials) {
   try {
@@ -30,7 +31,7 @@ export async function registerUser(data) {
 export async function getCurrentUser() {
   const token = localStorage.getItem("token");
   try {
-    const res = await fetch("http://localhost:3000/api/auth/me", {
+    const res = await fetch(`${BASE}/auth/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
   const token = localStorage.getItem("token");
 
   // ✅ Load all users
   useEffect(() => {
-    fetch("http://localhost:3000/api/users", {
+    fetch(`${BASE_URL}/users`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -16,7 +16,7 @@ export default function AdminUsers() {
 
   // ✅ Toggle active/inactive
   const toggleUser = async (id) => {
-    await fetch(`http://localhost:3000/api/users/${id}/toggle`, {
+    await fetch(`${BASE_URL}/users/${id}/toggle`, {
       method: "PATCH",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -30,7 +30,7 @@ export default function AdminUsers() {
     const confirmed = confirm(`Are you sure you want to delete ${username}?`);
     if (!confirmed) return;
 
-    await fetch(`http://localhost:3000/api/users/${id}`, {
+    await fetch(`${BASE_URL}/users/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });

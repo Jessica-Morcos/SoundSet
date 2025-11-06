@@ -7,7 +7,7 @@ import {
   deleteSong,
   toggleRestricted,
 } from "../api/songs";
-
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export default function AdminSongs() {
   const [songs, setSongs] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -65,7 +65,7 @@ const handleFileUpload = async (file, type) => {
   formData.append("file", file);
   setUploading(true);
   try {
-    const res = await fetch(`http://localhost:3000/api/upload/${type}`, {
+    const res = await fetch(`${BASE_URL}/upload/${type}`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: formData,

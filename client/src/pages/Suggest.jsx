@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export default function Suggestions() {
   const [songs, setSongs] = useState([]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    fetch("http://localhost:3000/api/songs/suggest", {
+    fetch(`${BASE_URL}/songs/suggest`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())

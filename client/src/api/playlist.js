@@ -1,4 +1,5 @@
-const BASE_URL = "http://localhost:3000/api/playlist";
+const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/playlist`;
+
 
 export async function createPlaylist(data, token) {
   const res = await fetch(BASE_URL, {
@@ -45,7 +46,7 @@ export async function deletePlaylist(id, token) {
 }
 
 export async function updatePlaylist(id, data, token) {
-  const res = await fetch(`http://localhost:3000/api/playlist/${id}`, {
+  const res = await fetch(`${BASE_URL}/playlist/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

@@ -12,7 +12,7 @@ import {
   Cell,
   ResponsiveContainer,
 } from "recharts";
-
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export default function Stats() {
   const [songData, setSongData] = useState([]);
   const [artistData, setArtistData] = useState([]);
@@ -24,7 +24,7 @@ export default function Stats() {
     const headers = { Authorization: `Bearer ${token}` };
 
     // Fetch song frequency
-    fetch("http://localhost:3000/api/stats/frequency", { headers })
+    fetch(`${BASE_URL}/stats/frequency`, { headers })
       .then((res) => res.json())
       .then((data) =>
         setSongData(
@@ -36,7 +36,7 @@ export default function Stats() {
       );
 
     // Fetch artist stats
-    fetch("http://localhost:3000/api/stats/artist", { headers })
+    fetch(`${BASE_URL}/stats/artist"`, { headers })
       .then((res) => res.json())
       .then((data) =>
         setArtistData(
@@ -48,7 +48,7 @@ export default function Stats() {
       );
 
     // Fetch genre stats
-    fetch("http://localhost:3000/api/stats/genre", { headers })
+    fetch(`${BASE_URL}/stats/genre`, { headers })
       .then((res) => res.json())
       .then((data) =>
         setGenreData(
