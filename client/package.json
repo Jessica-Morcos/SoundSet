@@ -7,8 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "postinstall": "npx lightningcss-install"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
@@ -32,5 +31,4 @@
     "lightningcss": "^1.30.2",
     "vite": "^7.1.7"
   }
- 
 }
