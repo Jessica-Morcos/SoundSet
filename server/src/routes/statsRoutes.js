@@ -4,28 +4,61 @@ import { authMiddleware } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// ✅ Log a song play
 router.post("/log", authMiddleware, async (req, res) => {
-  const { songId } = req.body;
-  const entry = await PlayHistory.create({ user: req.user._id, song: songId });
-  res.status(201).json(entry);
+  try {
+    const { songId } = req.body;
+
+    // Ensure valid ObjectId type
+    const song = await mongoose.model("Song").findById(songId);
+    if (!song) return res.status(404).json({ message: "Song not found" });
+
+    await PlayHistory.create({
+      user: req.user._id,
+      song: song._id,
+    });
+
+    res.status(201).json({ message: `Play logged for ${song.title}` });
+  } catch (err) {
+    console.error("Error logging play:", err);
+    res.status(500).json({ message: "Failed to log play" });
+  }
 });
 
-// ✅ Get play frequency (per song)
+
 router.get("/frequency", authMiddleware, async (req, res) => {
-  const data = await PlayHistory.aggregate([
-    { $match: { user: req.user._id } },
-    { $group: { _id: "$song", count: { $sum: 1 } } },
-    {
-      $lookup: {
-        from: "songs",
-        localField: "_id",
-        foreignField: "_id",
-        as: "songInfo",
+  try {
+    const data = await PlayHistory.aggregate([
+      { $match: { user: req.user._id } },
+      {
+        $group: {
+          _id: "$song",
+          count: { $sum: 1 },
+        },
       },
-    },
-  ]);
-  res.json(data);
+      {
+        $lookup: {
+          from: "songs",
+          localField: "_id", // matches _id in songs
+          foreignField: "_id",
+          as: "songInfo",
+        },
+      },
+      { $unwind: { path: "$songInfo", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 1,
+          count: 1,
+          "songInfo.title": 1,
+          "songInfo.artist": 1,
+          "songInfo.genre": 1,
+        },
+      },
+    ]);
+    res.json(data);
+  } catch (err) {
+    console.error("Error fetching frequency:", err);
+    res.status(500).json({ message: "Failed to fetch frequency stats" });
+  }
 });
 
 // ✅ Most played artists
