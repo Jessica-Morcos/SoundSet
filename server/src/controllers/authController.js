@@ -23,6 +23,13 @@ export const loginUser = async (req, res) => {
     const user = await User.findOne({ username });
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    // 🚫 Block deactivated accounts
+    if (!user.isActive) {
+      return res
+        .status(403)
+        .json({ message: "Account deactivated. Please contact an admin." });
+    }
+
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) return res.status(401).json({ message: "Invalid credentials" });
 
@@ -34,6 +41,7 @@ export const loginUser = async (req, res) => {
 
     res.json({ token, username: user.username, role: user.role });
   } catch (err) {
+    console.error("Login error:", err);
     res.status(500).json({ message: err.message });
   }
 };
