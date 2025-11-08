@@ -1,7 +1,7 @@
 import express from "express";
 import PlayHistory from "../models/PlayHistory.js";
 import { authMiddleware } from "../middleware/auth.js";
-
+import mongoose from "mongoose";
 const router = express.Router();
 
 router.post("/log", authMiddleware, async (req, res) => {

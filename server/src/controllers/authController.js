@@ -16,7 +16,6 @@ export const registerUser = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-
 export const loginUser = async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -45,6 +44,7 @@ export const loginUser = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
 
 export const getCurrentUser = async (req, res) => {
   const user = await User.findById(req.user._id).select("-passwordHash");
