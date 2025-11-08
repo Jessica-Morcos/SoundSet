@@ -51,7 +51,6 @@ export const getFrequency = async (req, res) => {
       { $unwind: { path: "$songInfo", preserveNullAndEmptyArrays: true } },
       {
         $project: {
-          _id: 0,
           songId: "$_id",
           count: 1,
           "songInfo.title": 1,
