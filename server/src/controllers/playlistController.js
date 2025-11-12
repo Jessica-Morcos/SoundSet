@@ -101,30 +101,37 @@ export const clonePlaylist = async (req, res) => {
   }
 };
 
-// ✅ Get a single playlist (owner access only)
 export const getPlaylistById = async (req, res) => {
   try {
-    const playlist = await Playlist.findById(req.params.id).populate("songs.song");
+    const playlist = await Playlist.findById(req.params.id)
+      .populate("songs.song")
+      .populate("owner", "username role");
+
     if (!playlist) {
       return res.status(404).json({ message: "Playlist not found" });
     }
 
-    if (playlist.owner.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Unauthorized access" });
+    // 🧠 Allow if it's public or owned by the user
+    const isOwner =
+      req.user && playlist.owner?._id?.toString() === req.user._id.toString();
+    if (!playlist.isPublic && !isOwner) {
+      return res.status(403).json({ message: "This playlist is private." });
     }
 
+    // ✅ Filter out restricted/deleted songs
     playlist.songs = playlist.songs.filter(
       (entry) => entry.song && entry.song.restricted === false
     );
 
+    // Return full playlist with songs
     res.json(playlist);
   } catch (err) {
     console.error("Error fetching playlist:", err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: "Error fetching playlist" });
   }
 };
 
-// ✅ NEW: List all public playlists (for Discover)
+
 export const listPublicPlaylists = async (req, res) => {
   try {
     const playlists = await Playlist.find({ isPublic: true })

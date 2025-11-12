@@ -1,3 +1,5 @@
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
 import express from "express";
 import Playlist from "../models/Playlist.js";
 import {
@@ -11,6 +13,23 @@ import {
 import { authMiddleware } from "../middleware/auth.js";
 
 const router = express.Router();
+
+
+
+const authMiddlewareOptional = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return next();
+
+  const token = authHeader.split(" ")[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.id);
+  } catch {
+    // ignore invalid token
+  }
+  next();
+};
+
 
 // ✅ Public discover endpoint (must come FIRST)
 router.get("/discover", listPublicPlaylists);
@@ -26,7 +45,8 @@ router.post("/", authMiddleware, createPlaylist);
 router.get("/mine", authMiddleware, getMyPlaylists);
 router.put("/:id/publish", authMiddleware, togglePublic);
 router.post("/:id/clone", authMiddleware, clonePlaylist);
-router.get("/:id", authMiddleware, getPlaylistById);
+router.get("/:id", authMiddlewareOptional, getPlaylistById);
+
 
 // ✅ Delete playlist
 router.delete("/:id", authMiddleware, async (req, res) => {
