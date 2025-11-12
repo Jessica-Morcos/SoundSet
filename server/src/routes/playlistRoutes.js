@@ -21,6 +21,11 @@ router.post("/:id/clone", authMiddleware, clonePlaylist);
 // ✅ Public endpoint — no login required
 router.get("/discover", listPublicPlaylists);
 
+router.get("/debug/public", async (req, res) => {
+  const playlists = await Playlist.find().select("name isPublic owner");
+  res.json(playlists);
+});
+
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     const playlist = await Playlist.findById(req.params.id);
