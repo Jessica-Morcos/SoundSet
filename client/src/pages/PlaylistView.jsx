@@ -178,7 +178,7 @@ export default function PlaylistView() {
                   "birthday",
                   "club",
                   "charity",
-                  "custom",
+             
                 ].map((c) => (
                   <option key={c} value={c}>
                     {c.charAt(0).toUpperCase() + c.slice(1)}

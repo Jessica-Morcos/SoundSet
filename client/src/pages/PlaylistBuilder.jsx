@@ -76,7 +76,7 @@ export default function PlaylistBuilder() {
     "birthday",
     "club",
     "charity",
-    "custom",
+  
   ];
 
   return (

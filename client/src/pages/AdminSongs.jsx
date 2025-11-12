@@ -1,4 +1,3 @@
-// src/pages/AdminSongs.jsx
 import { useEffect, useState } from "react";
 import {
   getAllSongs,
@@ -7,11 +6,13 @@ import {
   deleteSong,
   toggleRestricted,
 } from "../api/songs";
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function AdminSongs() {
   const [songs, setSongs] = useState([]);
   const [filtered, setFiltered] = useState([]);
-  const [editingSong, setEditingSong] = useState(null);
+  const [editingSong, setEditingSong] = useState(null); // 👈 for edit modal
   const [uploading, setUploading] = useState(false);
 
   const [newSong, setNewSong] = useState({
@@ -41,8 +42,7 @@ export default function AdminSongs() {
 
   useEffect(() => {
     let result = songs;
-    if (filters.genre)
-      result = result.filter((s) => s.genre === filters.genre);
+    if (filters.genre) result = result.filter((s) => s.genre === filters.genre);
     if (filters.artist)
       result = result.filter((s) => s.artist === filters.artist);
     if (filters.year)
@@ -58,30 +58,29 @@ export default function AdminSongs() {
   const uniqueArtists = [...new Set(songs.map((s) => s.artist).filter(Boolean))];
   const uniqueYears = [...new Set(songs.map((s) => s.year).filter(Boolean))];
 
- // ✅ Fix: add `type` and point to correct backend endpoints
-const handleFileUpload = async (file, type) => {
-  const token = localStorage.getItem("token");
-  const formData = new FormData();
-  formData.append("file", file);
-  setUploading(true);
-  try {
-    const res = await fetch(`${BASE_URL}/upload/${type}`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    });
-    const data = await res.json();
-    setUploading(false);
-    return data.url;
-  } catch (err) {
-    console.error("Upload failed:", err);
-    setUploading(false);
-    alert("Upload failed");
-  }
-};
+  // ✅ Upload helper
+  const handleFileUpload = async (file, type) => {
+    const token = localStorage.getItem("token");
+    const formData = new FormData();
+    formData.append("file", file);
+    setUploading(true);
+    try {
+      const res = await fetch(`${BASE_URL}/upload/${type}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      setUploading(false);
+      return data.url;
+    } catch (err) {
+      console.error("Upload failed:", err);
+      setUploading(false);
+      alert("Upload failed");
+    }
+  };
 
-
-  // Add Song
+  // ✅ Add Song
   const handleAddSong = async () => {
     const token = localStorage.getItem("token");
     if (!newSong.title.trim() || !newSong.audioUrl) {
@@ -104,6 +103,7 @@ const handleFileUpload = async (file, type) => {
     } else alert("❌ Failed to add song");
   };
 
+  // ✅ Update Song
   const handleUpdate = async (song) => {
     const token = localStorage.getItem("token");
     const res = await updateSong(song._id, song, token);
@@ -137,7 +137,7 @@ const handleFileUpload = async (file, type) => {
   };
 
   return (
-    <div className="min-h-screen  text-white py-10 px-6 flex flex-col items-center">
+    <div className="min-h-screen text-white py-10 px-6 flex flex-col items-center">
       <h1 className="text-4xl font-extrabold mb-6">Admin Song Management ⚙️</h1>
 
       {/* Filters */}
@@ -222,11 +222,7 @@ const handleFileUpload = async (file, type) => {
               className="text-sm"
             />
             {newSong.audioUrl && (
-              <audio
-                controls
-                src={newSong.audioUrl}
-                className="mt-2 w-full"
-              ></audio>
+              <audio controls src={newSong.audioUrl} className="mt-2 w-full" />
             )}
           </div>
 
@@ -279,7 +275,6 @@ const handleFileUpload = async (file, type) => {
               <th className="p-3 text-left">Artist</th>
               <th className="p-3 text-left">Genre</th>
               <th className="p-3 text-left">Year</th>
-              <th className="p-3 text-left">Audio</th>
               <th className="p-3 text-center">Restricted</th>
               <th className="p-3 text-center">Actions</th>
             </tr>
@@ -307,11 +302,6 @@ const handleFileUpload = async (file, type) => {
                 <td className="p-3">{song.artist}</td>
                 <td className="p-3">{song.genre}</td>
                 <td className="p-3">{song.year}</td>
-                <td className="p-3">
-                  {song.audioUrl && (
-                    <audio controls src={song.audioUrl} className="w-70" />
-                  )}
-                </td>
                 <td className="p-3 text-center">
                   {song.restricted ? "🔒" : "✅"}
                 </td>
@@ -321,6 +311,12 @@ const handleFileUpload = async (file, type) => {
                     className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
                   >
                     {song.restricted ? "Unlock" : "Lock"}
+                  </button>
+                  <button
+                    onClick={() => setEditingSong(song)} // 👈 open edit modal
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
+                  >
+                    ✏️ Edit
                   </button>
                   <button
                     onClick={() => handleDelete(song._id)}
@@ -334,6 +330,96 @@ const handleFileUpload = async (file, type) => {
           </tbody>
         </table>
       </div>
+
+      {/* ✏️ Edit Song Modal */}
+      {editingSong && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-white text-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4 text-indigo-600">
+              Edit Song
+            </h2>
+
+            <div className="grid gap-3">
+              {["title", "artist", "genre", "year", "durationSec"].map(
+                (field) => (
+                  <input
+                    key={field}
+                    placeholder={field}
+                    value={editingSong[field] || ""}
+                    onChange={(e) =>
+                      setEditingSong({
+                        ...editingSong,
+                        [field]:
+                          field === "year" || field === "durationSec"
+                            ? Number(e.target.value)
+                            : e.target.value,
+                      })
+                    }
+                    className="p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  />
+                )
+              )}
+
+              <label className="text-sm font-semibold text-gray-600">
+                Classification
+              </label>
+              <select
+                value={editingSong.classification || "general"}
+                onChange={(e) =>
+                  setEditingSong({
+                    ...editingSong,
+                    classification: e.target.value,
+                  })
+                }
+                className="p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+              >
+                {[
+                  "general",
+                  "wedding",
+                  "corporate",
+                  "birthday",
+                  "club",
+                  "charity",
+                  "custom",
+                ].map((c) => (
+                  <option key={c} value={c}>
+                    {c.charAt(0).toUpperCase() + c.slice(1)}
+                  </option>
+                ))}
+              </select>
+
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={editingSong.restricted || false}
+                  onChange={(e) =>
+                    setEditingSong({
+                      ...editingSong,
+                      restricted: e.target.checked,
+                    })
+                  }
+                />
+                Restricted
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setEditingSong(null)}
+                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleUpdate(editingSong)}
+                className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
