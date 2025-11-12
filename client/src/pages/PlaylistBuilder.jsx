@@ -7,11 +7,11 @@ export default function PlaylistBuilder() {
   const [filtered, setFiltered] = useState([]);
   const [selected, setSelected] = useState([]);
   const [name, setName] = useState("");
+  const [classification, setClassification] = useState("general"); // 👈 new
   const [genreFilter, setGenreFilter] = useState("");
   const [artistFilter, setArtistFilter] = useState("");
   const [yearFilter, setYearFilter] = useState("");
 
-  // ✅ load songs (only if we have a token)
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -20,10 +20,7 @@ export default function PlaylistBuilder() {
     }
 
     getAllSongs(token).then((data) => {
-      // data should be an array of songs returned by the backend
       if (Array.isArray(data)) {
-        // backend already hides restricted for non-admin,
-        // but we can double-guard here:
         const safe = data.filter((s) => !s.restricted);
         setSongs(safe);
         setFiltered(safe);
@@ -35,7 +32,6 @@ export default function PlaylistBuilder() {
     });
   }, []);
 
-  // ✅ Filter logic
   useEffect(() => {
     let result = songs;
     if (genreFilter) result = result.filter((s) => s.genre === genreFilter);
@@ -54,58 +50,75 @@ export default function PlaylistBuilder() {
   };
 
   const handleCreate = async () => {
-    if (!name.trim()) {
-      alert("Please enter a playlist name.");
-      return;
-    }
+    if (!name.trim()) return alert("Please enter a playlist name.");
 
     const token = localStorage.getItem("token");
-    if (!token) {
-      alert("You must be logged in to create a playlist.");
-      return;
-    }
+    if (!token) return alert("You must be logged in to create a playlist.");
 
     const data = {
       name,
+      classification, // 👈 now dynamic
       songs: selected.map((s, i) => ({ songId: s._id, order: i })),
-      classification: "general",
     };
+
     const res = await createPlaylist(data, token);
     alert(res.message || "Playlist created!");
   };
 
   const uniqueGenres = [...new Set(songs.map((s) => s.genre).filter(Boolean))];
-  const uniqueArtists = [
-    ...new Set(songs.map((s) => s.artist).filter(Boolean)),
-  ];
+  const uniqueArtists = [...new Set(songs.map((s) => s.artist).filter(Boolean))];
   const uniqueYears = [...new Set(songs.map((s) => s.year).filter(Boolean))];
 
+  const classifications = [
+    "general",
+    "wedding",
+    "corporate",
+    "birthday",
+    "club",
+    "charity",
+    "custom",
+  ];
+
   return (
-    <div className="min-h-screen  flex flex-col items-center py-10 px-6 text-white">
+    <div className="min-h-screen flex flex-col items-center py-10 px-6 text-white">
       <h1 className="text-4xl font-extrabold mb-4">Create Playlist</h1>
       <p className="text-gray-200 mb-8">
         Choose songs to build your custom playlist 🎧
       </p>
 
-      {/* Playlist name input */}
+      {/* Playlist name & classification */}
       <div className="bg-white text-gray-800 rounded-2xl shadow-lg p-6 w-full max-w-2xl mb-10">
         <label className="block text-sm font-semibold text-gray-600 mb-2">
           Playlist Name
         </label>
-        <div className="flex gap-3">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Enter playlist name"
-            className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-          />
-          <button
-            onClick={handleCreate}
-            className="bg-indigo-600 text-white font-semibold px-5 py-2 rounded-lg hover:bg-indigo-700 transition"
-          >
-            Save Playlist
-          </button>
-        </div>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Enter playlist name"
+          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none mb-4"
+        />
+
+        <label className="block text-sm font-semibold text-gray-600 mb-2">
+          Classification
+        </label>
+        <select
+          value={classification}
+          onChange={(e) => setClassification(e.target.value)}
+          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none mb-4"
+        >
+          {classifications.map((c) => (
+            <option key={c} value={c}>
+              {c.charAt(0).toUpperCase() + c.slice(1)}
+            </option>
+          ))}
+        </select>
+
+        <button
+          onClick={handleCreate}
+          className="bg-indigo-600 text-white font-semibold px-5 py-2 rounded-lg hover:bg-indigo-700 transition w-full"
+        >
+          Save Playlist
+        </button>
       </div>
 
       {/* 🔍 Filter Bar */}

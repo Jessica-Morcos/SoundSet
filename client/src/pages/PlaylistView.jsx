@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getPlaylistById, updatePlaylist, deletePlaylist } from "../api/playlist";
 import { getAllSongs } from "../api/songs";
 import { logPlay } from "../api/stats";
 import toast from "react-hot-toast";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { useContext } from "react";
 import { PlayerContext } from "../context/PlayerContext";
 
 export default function PlaylistView() {
@@ -22,6 +21,8 @@ export default function PlaylistView() {
   const [artistFilter, setArtistFilter] = useState("");
   const [yearFilter, setYearFilter] = useState("");
 
+  const { playSong } = useContext(PlayerContext);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     Promise.all([getPlaylistById(id, token), getAllSongs(token)]).then(
@@ -33,9 +34,6 @@ export default function PlaylistView() {
     );
   }, [id]);
 
- const { playSong } = useContext(PlayerContext);
-
-
   // ✅ Save edited playlist
   const handleSaveChanges = async () => {
     const token = localStorage.getItem("token");
@@ -45,10 +43,12 @@ export default function PlaylistView() {
         id,
         {
           name: playlist.name,
+          classification: playlist.classification, // 👈 added
           songs: selectedSongs.map((songId, i) => ({ songId, order: i })),
         },
         token
       );
+
       toast.dismiss();
       if (res.message === "Playlist updated successfully") {
         toast.success("Playlist updated successfully!");
@@ -114,7 +114,7 @@ export default function PlaylistView() {
   const uniqueYears = [...new Set(songs.map((s) => s.year).filter(Boolean))];
 
   return (
-    <div className="min-h-screen  text-white flex flex-col items-center py-10 px-6">
+    <div className="min-h-screen text-white flex flex-col items-center py-10 px-6">
       <div className="bg-white text-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-3xl relative">
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
@@ -149,9 +149,44 @@ export default function PlaylistView() {
           </div>
         </div>
 
+        {/* 👇 Classification Display in View Mode */}
+        {!isEditing && (
+          <p className="text-gray-500 mb-4 italic">
+            {playlist.classification || "general"}
+          </p>
+        )}
+
         {/* Edit Mode */}
         {isEditing ? (
           <>
+            {/* 🎯 Classification Dropdown */}
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Classification
+              </label>
+              <select
+                value={playlist.classification || "general"}
+                onChange={(e) =>
+                  setPlaylist({ ...playlist, classification: e.target.value })
+                }
+                className="bg-white text-gray-700 px-3 py-2 rounded-lg border w-full"
+              >
+                {[
+                  "general",
+                  "wedding",
+                  "corporate",
+                  "birthday",
+                  "club",
+                  "charity",
+                  "custom",
+                ].map((c) => (
+                  <option key={c} value={c}>
+                    {c.charAt(0).toUpperCase() + c.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Filters */}
             <div className="flex flex-wrap justify-center gap-3 mb-4">
               <select
@@ -325,8 +360,6 @@ export default function PlaylistView() {
                     >
                       ▶ Play
                     </button>
-
-
                   </div>
                 </li>
               ))}
