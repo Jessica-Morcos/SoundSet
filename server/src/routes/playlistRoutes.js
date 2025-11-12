@@ -12,14 +12,16 @@ import { authMiddleware } from "../middleware/auth.js";
 
 const router = express.Router();
 
+// ✅ Public discover endpoint (must come FIRST)
+router.get("/discover", listPublicPlaylists);
+
+// ✅ Authenticated playlist routes
 router.post("/", authMiddleware, createPlaylist);
 router.get("/mine", authMiddleware, getMyPlaylists);
-router.get("/:id", authMiddleware, getPlaylistById);
 router.put("/:id/publish", authMiddleware, togglePublic);
 router.post("/:id/clone", authMiddleware, clonePlaylist);
+router.get("/:id", authMiddleware, getPlaylistById);
 
-// ✅ Public endpoint — no login required
-router.get("/discover", listPublicPlaylists);
 
 router.get("/debug/public", async (req, res) => {
   const playlists = await Playlist.find().select("name isPublic owner");
