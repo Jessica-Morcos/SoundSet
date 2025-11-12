@@ -36,6 +36,76 @@ export const getMyPlaylists = async (req, res) => {
   res.json(lists);
 };
 
+//  Toggle playlist public/private (DJ only)
+export const togglePublic = async (req, res) => {
+  try {
+    const playlist = await Playlist.findById(req.params.id);
+    if (!playlist) return res.status(404).json({ message: "Playlist not found" });
+
+    if (req.user.role !== "dj" && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Only DJs or admins can publish playlists" });
+    }
+
+    playlist.isPublic = !playlist.isPublic;
+    await playlist.save();
+    res.json({
+      message: `Playlist is now ${playlist.isPublic ? "public" : "private"}`,
+      playlist,
+    });
+  } catch (err) {
+    console.error("Error toggling public status:", err);
+    res.status(500).json({ message: "Failed to toggle playlist visibility" });
+  }
+};
+
+
+  // ✅ Clone a public playlist into the current user's account
+export const clonePlaylist = async (req, res) => {
+  try {
+    const sourcePlaylist = await Playlist.findById(req.params.id).populate("songs.song");
+    if (!sourcePlaylist) {
+      return res.status(404).json({ message: "Playlist not found" });
+    }
+
+    if (!sourcePlaylist.isPublic) {
+      return res.status(403).json({ message: "This playlist is not public" });
+    }
+
+    // Check if the user already has this playlist cloned
+    const existing = await Playlist.findOne({
+      owner: req.user._id,
+      name: `${sourcePlaylist.name} (Copy)`,
+    });
+    if (existing) {
+      return res.status(400).json({ message: "You already added this playlist." });
+    }
+
+    // Create cloned playlist
+    const cloned = new Playlist({
+      owner: req.user._id,
+      name: `${sourcePlaylist.name} (Copy)`,
+      classification: sourcePlaylist.classification,
+      songs: sourcePlaylist.songs.map((entry) => ({
+        song: entry.song._id,
+        order: entry.order,
+      })),
+      totalDurationSec: sourcePlaylist.totalDurationSec,
+      isPublic: false, // copies are private by default
+    });
+
+    await cloned.save();
+    res.status(201).json({
+      message: "Playlist added to your account!",
+      playlist: cloned,
+    });
+  } catch (err) {
+    console.error("Error cloning playlist:", err);
+    res.status(500).json({ message: "Failed to clone playlist" });
+  }
+};
+
+
+
 // ✅ Get single playlist by ID (auto-filters out restricted/deleted songs)
 export const getPlaylistById = async (req, res) => {
   try {

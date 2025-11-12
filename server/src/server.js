@@ -14,6 +14,7 @@ import songRoutes from "./routes/songRoutes.js";
 import playlistRoutes from "./routes/playlistRoutes.js";
 import statsRoutes from "./routes/statsRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
+import djRoutes from "./routes/djRoutes.js";
 
 // ✅ Initialize app
 const app = express();
@@ -29,6 +30,7 @@ app.use("/api/songs", songRoutes);
 app.use("/api/playlist", playlistRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/dj", djRoutes);
 
 // ✅ Serve static uploads (only used if you ever switch back to local storage)
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));

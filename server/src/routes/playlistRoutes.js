@@ -7,16 +7,21 @@ import {
   getPlaylistById,
 } from "../controllers/playlistController.js";
 import { authMiddleware } from "../middleware/auth.js";
+import { togglePublic } from "../controllers/playlistController.js";
+import { clonePlaylist } from "../controllers/playlistController.js";
+
+
+
+
 
 const router = express.Router();
 
 router.post("/", authMiddleware, createPlaylist);
 router.get("/mine", authMiddleware, getMyPlaylists);
 router.get("/:id", authMiddleware, getPlaylistById);
+router.put("/:id/publish", authMiddleware, togglePublic);
+router.post("/:id/clone", authMiddleware, clonePlaylist);
 
-// ✅ Delete a playlist
-// ✅ Delete only the playlist, not the songs
-// ✅ Delete a playlist
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     const playlist = await Playlist.findById(req.params.id);
