@@ -1,11 +1,21 @@
 import { useEffect, useState } from "react";
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
   const token = localStorage.getItem("token");
 
-  // ✅ Load all users
+  // ✅ Load all users on mount
   useEffect(() => {
+    if (!token) {
+      console.error("No token found — please log in as admin.");
+      return;
+    }
+
+    console.log("Token:", token);
+    console.log("GET URL:", `${BASE_URL}/users`);
+
     fetch(`${BASE_URL}/users`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -16,13 +26,28 @@ export default function AdminUsers() {
 
   // ✅ Toggle active/inactive
   const toggleUser = async (id) => {
-    await fetch(`${BASE_URL}/users/${id}/toggle`, {
-      method: "PATCH",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setUsers((prev) =>
-      prev.map((u) => (u._id === id ? { ...u, isActive: !u.isActive } : u))
-    );
+    console.log("PATCH URL:", `${BASE_URL}/users/${id}/toggle`);
+    try {
+      const res = await fetch(`${BASE_URL}/users/${id}/toggle`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Failed to toggle user");
+      }
+
+      // Reload the user list after toggling
+      const refreshed = await fetch(`${BASE_URL}/users`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const updatedUsers = await refreshed.json();
+      setUsers(updatedUsers);
+    } catch (err) {
+      console.error("Error toggling user:", err);
+      alert(err.message);
+    }
   };
 
   // ✅ Delete user
@@ -30,16 +55,26 @@ export default function AdminUsers() {
     const confirmed = confirm(`Are you sure you want to delete ${username}?`);
     if (!confirmed) return;
 
-    await fetch(`${BASE_URL}/users/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    try {
+      const res = await fetch(`${BASE_URL}/users/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    setUsers((prev) => prev.filter((u) => u._id !== id));
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.message || "Failed to delete user");
+      }
+
+      setUsers((prev) => prev.filter((u) => u._id !== id));
+    } catch (err) {
+      console.error("Error deleting user:", err);
+      alert(err.message);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-700 text-white p-10">
+    <div className="min-h-screen bg-gradient-to-br text-white p-10">
       <h1 className="text-4xl font-bold text-center mb-6">User Management</h1>
 
       <div className="bg-white text-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-5xl mx-auto">

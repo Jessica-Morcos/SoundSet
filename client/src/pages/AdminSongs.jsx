@@ -137,7 +137,7 @@ const handleFileUpload = async (file, type) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-700 text-white py-10 px-6 flex flex-col items-center">
+    <div className="min-h-screen  text-white py-10 px-6 flex flex-col items-center">
       <h1 className="text-4xl font-extrabold mb-6">Admin Song Management ⚙️</h1>
 
       {/* Filters */}
@@ -250,7 +250,7 @@ const handleFileUpload = async (file, type) => {
               <img
                 src={newSong.coverUrl}
                 alt="cover preview"
-                className="mt-2 w-24 h-24 object-cover rounded-lg"
+                className="mt-2 w-30 h-30 object-cover rounded-lg"
               />
             )}
           </div>
@@ -309,7 +309,7 @@ const handleFileUpload = async (file, type) => {
                 <td className="p-3">{song.year}</td>
                 <td className="p-3">
                   {song.audioUrl && (
-                    <audio controls src={song.audioUrl} className="w-32" />
+                    <audio controls src={song.audioUrl} className="w-70" />
                   )}
                 </td>
                 <td className="p-3 text-center">

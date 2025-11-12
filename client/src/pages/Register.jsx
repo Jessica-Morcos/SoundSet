@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { registerUser } from "../api/auth";
 import { useNavigate, Link } from "react-router-dom";
+import logo from "../assets/logo.png"; // ✅ Match the same logo import as in Login.jsx
 
 export default function Register() {
   const [username, setUsername] = useState("");
@@ -30,19 +31,23 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-700 p-6">
-      <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
-          Create an Account
-        </h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1c0f2f] via-[#5b3a9b] to-[#9c7df5] p-6">
+      <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl p-10 w-full max-w-md">
+        {/* Header with logo */}
+        <div className="flex flex-col items-center mb-6">
+          <img src={logo} alt="Logo" className="h-30 w-auto mb-4" />
+          <h1 className="text-3xl font-bold text-[#1c0f2f]">Create Account</h1>
+          <p className="text-gray-600 text-sm mt-1">Join SoundSet today</p>
+        </div>
 
-        <form onSubmit={handleRegister} className="space-y-4">
+        {/* Form */}
+        <form onSubmit={handleRegister} className="space-y-4 text-black">
           <input
             type="text"
             placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9c7df5] outline-none"
             required
           />
           <input
@@ -50,7 +55,7 @@ export default function Register() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9c7df5] outline-none"
             required
           />
           <input
@@ -58,27 +63,27 @@ export default function Register() {
             placeholder="Confirm Password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9c7df5] outline-none"
             required
           />
 
           {error && <p className="text-red-500 text-center text-sm">{error}</p>}
-          {success && <p className="text-green-500 text-center text-sm">{success}</p>}
+          {success && (
+            <p className="text-green-500 text-center text-sm">{success}</p>
+          )}
 
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white font-semibold py-3 rounded-lg hover:bg-indigo-700 transition"
+            className="w-full bg-[#5b3a9b] text-white font-semibold py-3 rounded-lg hover:bg-[#4c2f83] transition"
           >
             Register
           </button>
         </form>
 
+        {/* Footer */}
         <p className="text-center mt-4 text-gray-600">
           Already have an account?{" "}
-          <Link
-            to="/login"
-            className="text-indigo-600 font-semibold hover:underline"
-          >
+          <Link to="/login" className="text-[#5b3a9b] font-semibold hover:underline">
             Login
           </Link>
         </p>

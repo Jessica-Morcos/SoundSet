@@ -1,32 +1,55 @@
-// server/src/routes/uploadRoutes.js
-import express from "express";
-import multer from "multer";
-import { v2 as cloudinary } from "cloudinary";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
+// client/src/api/playlist.js
+const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/playlist`;
 
-const router = express.Router();
+export async function createPlaylist(data, token) {
+  const res = await fetch(BASE_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
 
-// Cloudinary config
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+  if (!res.ok) {
+    const err = await res.text();
+    console.error("❌ Playlist creation failed:", err);
+    throw new Error("Playlist creation failed");
+  }
 
-// Multer storage
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: async (req, file) => ({
-    folder: "soundset_songs",
-    resource_type: "auto", // supports both image & audio
-  }),
-});
+  return res.json();
+}
 
-const upload = multer({ storage });
+export async function getMyPlaylists(token) {
+  const res = await fetch(`${BASE_URL}/mine`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.json();
+}
 
-// Upload endpoint
-router.post("/", upload.single("file"), (req, res) => {
-  res.json({ url: req.file.path });
-});
+export async function getPlaylistById(id, token) {
+  const res = await fetch(`${BASE_URL}/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.json();
+}
 
-export default router;
+export async function deletePlaylist(id, token) {
+  const res = await fetch(`${BASE_URL}/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.json();
+}
+
+export async function updatePlaylist(id, data, token) {
+  const res = await fetch(`${BASE_URL}/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}

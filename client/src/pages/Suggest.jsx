@@ -14,7 +14,7 @@ export default function Suggestions() {
   }, []);
 
   return (
-    <div className="p-8 text-white bg-gradient-to-br from-indigo-700 via-purple-700 to-blue-800 min-h-screen">
+    <div className="p-8 text-white  min-h-screen">
       <h1 className="text-3xl font-bold mb-6">Recommended For You 🎧</h1>
       {songs.length === 0 ? (
         <p>No suggestions yet. Play more songs!</p>

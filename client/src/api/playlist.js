@@ -46,7 +46,7 @@ export async function deletePlaylist(id, token) {
 }
 
 export async function updatePlaylist(id, data, token) {
-  const res = await fetch(`${BASE_URL}/playlist/${id}`, {
+  const res = await fetch(`${BASE_URL}/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -56,6 +56,8 @@ export async function updatePlaylist(id, data, token) {
   });
   return res.json();
 }
+
+
 
 
 

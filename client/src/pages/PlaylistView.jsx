@@ -114,7 +114,7 @@ export default function PlaylistView() {
   const uniqueYears = [...new Set(songs.map((s) => s.year).filter(Boolean))];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 text-white flex flex-col items-center py-10 px-6">
+    <div className="min-h-screen  text-white flex flex-col items-center py-10 px-6">
       <div className="bg-white text-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-3xl relative">
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
@@ -285,7 +285,7 @@ export default function PlaylistView() {
                 onClick={handleSaveChanges}
                 className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
               >
-                💾 Save Changes
+                Save Changes
               </button>
             </div>
           </>
@@ -318,11 +318,14 @@ export default function PlaylistView() {
                         : ""}
                     </p>
                     <button
-                      onClick={() => playSong(entry.song)}
+                      onClick={() =>
+                        playSong(entry.song, playlist.songs.map((s) => s.song))
+                      }
                       className="px-3 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition"
                     >
                       ▶ Play
                     </button>
+
 
                   </div>
                 </li>

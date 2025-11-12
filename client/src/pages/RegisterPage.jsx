@@ -15,7 +15,7 @@ export default function RegisterPage() {
   return (
     <div className="page">
       <h1>Register</h1>
-      <form onSubmit={handleRegister}>
+      <form onSubmit={handleRegister} >
         <input
           type="text"
           placeholder="Username"

@@ -1,6 +1,7 @@
 import { useContext } from "react";
 import { PlayerContext } from "../context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { Play, Pause, SkipBack, SkipForward, X } from "lucide-react";
 
 export default function PlayerBar() {
   const {
@@ -13,14 +14,26 @@ export default function PlayerBar() {
     skip,
     isFullscreen,
     setIsFullscreen,
+    nextSong,
+    prevSong,
   } = useContext(PlayerContext);
 
   if (!currentSong) return null;
 
   const progressPercent = duration ? (progress / duration) * 100 : 0;
 
+  const formatTime = (timeInSeconds) => {
+    if (!timeInSeconds || isNaN(timeInSeconds)) return "0:00";
+    const minutes = Math.floor(timeInSeconds / 60);
+    const seconds = Math.floor(timeInSeconds % 60)
+      .toString()
+      .padStart(2, "0");
+    return `${minutes}:${seconds}`;
+  };
+
   return (
     <AnimatePresence>
+      {/* ─────────── Mini Player (bottom bar) ─────────── */}
       {!isFullscreen && (
         <motion.div
           initial={{ y: 100 }}
@@ -29,6 +42,7 @@ export default function PlayerBar() {
           className="fixed bottom-0 left-0 right-0 bg-indigo-700 text-white p-3 shadow-2xl flex items-center justify-between cursor-pointer"
           onClick={() => setIsFullscreen(true)}
         >
+          {/* Song Info */}
           <div className="flex items-center gap-3">
             {currentSong.coverUrl && (
               <img
@@ -43,45 +57,50 @@ export default function PlayerBar() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Controls */}
+          <div className="flex items-center gap-4">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                skip(-30);
+                prevSong();
               }}
-              className="text-lg hover:text-gray-300"
+              className="text-gray-200 hover:text-white transition-colors"
             >
-              ⏪ 30s
+              <SkipBack size={22} />
             </button>
+
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 togglePlay();
               }}
-              className="text-2xl font-bold"
+              className="bg-purple-500 hover:bg-purple-600 rounded-full p-3 text-white shadow-lg transition-colors"
             >
-              {isPlaying ? "⏸️" : "▶️"}
+              {isPlaying ? <Pause size={28} /> : <Play size={28} />}
             </button>
+
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                skip(30);
+                nextSong();
               }}
-              className="text-lg hover:text-gray-300"
+              className="text-gray-200 hover:text-white transition-colors"
             >
-              30s ⏩
+              <SkipForward size={22} />
             </button>
           </div>
 
+          {/* Progress bar */}
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-500">
             <div
-              className="h-1 bg-green-400"
+              className="h-1 bg-purple-400"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
         </motion.div>
       )}
 
+      {/* ─────────── Fullscreen Player ─────────── */}
       {isFullscreen && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -89,6 +108,7 @@ export default function PlayerBar() {
           exit={{ opacity: 0 }}
           className="fixed inset-0 bg-gradient-to-br from-indigo-900 via-purple-800 to-indigo-700 flex flex-col items-center justify-center text-white z-50"
         >
+          {/* Cover */}
           {currentSong.coverUrl && (
             <img
               src={currentSong.coverUrl}
@@ -99,6 +119,7 @@ export default function PlayerBar() {
           <h2 className="text-3xl font-bold">{currentSong.title}</h2>
           <p className="text-gray-300 mb-4">{currentSong.artist}</p>
 
+          {/* Progress */}
           <div className="w-4/5 max-w-lg">
             <input
               type="range"
@@ -106,40 +127,44 @@ export default function PlayerBar() {
               max={duration || 0}
               value={progress}
               onChange={(e) => seek(Number(e.target.value))}
-              className="w-full accent-green-400"
+              className="w-full accent-purple-400"
             />
             <div className="flex justify-between text-sm text-gray-300">
-              <span>{Math.floor(progress)}s</span>
-              <span>{Math.floor(duration)}s</span>
+              <span>{formatTime(progress)}</span>
+              <span>{formatTime(duration)}</span>
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-6 mt-8">
+          {/* Controls */}
+          <div className="flex items-center justify-center gap-8 mt-8">
             <button
-              onClick={() => skip(-30)}
-              className="text-2xl hover:text-gray-300"
+              onClick={prevSong}
+              className="flex items-center gap-2 text-lg text-gray-300 hover:text-white transition-colors"
             >
-              ⏪ 30s
+              <SkipBack size={28} />
             </button>
+
             <button
               onClick={togglePlay}
-              className="bg-green-500 rounded-full p-4 text-3xl"
+              className="bg-purple-500 hover:bg-purple-600 rounded-full p-5 text-white transition-colors shadow-lg"
             >
-              {isPlaying ? "⏸️" : "▶️"}
+              {isPlaying ? <Pause size={36} /> : <Play size={36} />}
             </button>
+
             <button
-              onClick={() => skip(30)}
-              className="text-2xl hover:text-gray-300"
+              onClick={nextSong}
+              className="flex items-center gap-2 text-lg text-gray-300 hover:text-white transition-colors"
             >
-              30s ⏩
+              <SkipForward size={28} />
             </button>
           </div>
 
+          {/* Close */}
           <button
             onClick={() => setIsFullscreen(false)}
-            className="absolute top-6 right-6 text-gray-300 hover:text-white text-xl"
+            className="absolute top-6 right-6 text-gray-300 hover:text-white transition-colors"
           >
-            ✕
+            <X size={28} />
           </button>
         </motion.div>
       )}

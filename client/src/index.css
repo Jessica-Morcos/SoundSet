@@ -1,1 +1,10 @@
 @import "tailwindcss";
+html, body, #root {
+  height: 100%;
+  background-color: #1c0f2f;
+  margin: 0;
+  overflow-x: hidden;
+}
+body {
+  @apply bg-gradient-to-br from-[#1c0f2f] via-[#5b3a9b] to-[#9c7df5] min-h-screen text-white;
+}

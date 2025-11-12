@@ -81,7 +81,7 @@ export default function PlaylistBuilder() {
   const uniqueYears = [...new Set(songs.map((s) => s.year).filter(Boolean))];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-700 flex flex-col items-center py-10 px-6 text-white">
+    <div className="min-h-screen  flex flex-col items-center py-10 px-6 text-white">
       <h1 className="text-4xl font-extrabold mb-4">Create Playlist</h1>
       <p className="text-gray-200 mb-8">
         Choose songs to build your custom playlist 🎧

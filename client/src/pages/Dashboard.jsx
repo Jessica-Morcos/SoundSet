@@ -58,7 +58,7 @@ export default function Dashboard() {
 
  
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-700 text-white flex flex-col items-center p-8">
+    <div className="min-h-screen  text-white flex flex-col items-center p-8">
       {/* Welcome Section */}
       <div className="w-full max-w-5xl text-left mb-8">
         <h1 className="text-4xl font-bold mb-2">Welcome back,</h1>

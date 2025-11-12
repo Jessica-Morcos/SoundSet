@@ -4,13 +4,16 @@ export const PlayerContext = createContext();
 
 export default function PlayerProvider({ children }) {
   const audioRef = useRef(new Audio());
+
+  const [playlist, setPlaylist] = useState([]);       // all songs in current list
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [currentSong, setCurrentSong] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Sync progress bar
+  // Update progress continuously
   useEffect(() => {
     const audio = audioRef.current;
     const updateProgress = () => {
@@ -25,27 +28,59 @@ export default function PlayerProvider({ children }) {
     };
   }, []);
 
-  // Controls
-  const playSong = (song) => {
-    if (!song?.audioUrl) return;
+  // 🔁 Auto play next when current song ends
+  useEffect(() => {
     const audio = audioRef.current;
-    if (currentSong?._id !== song._id) {
-      audio.src = song.audioUrl;
-      setCurrentSong(song);
+    const handleEnded = () => nextSong();
+    audio.addEventListener("ended", handleEnded);
+    return () => audio.removeEventListener("ended", handleEnded);
+  }, [playlist, currentIndex]);
+
+  // ▶ Play a song (with optional playlist)
+  const playSong = async (song, list = []) => {
+  const audio = audioRef.current;
+
+  if (list.length) {
+    setPlaylist(list);
+    const index = list.findIndex((s) => s._id === song._id);
+    setCurrentIndex(index >= 0 ? index : 0);
+  }
+
+  if (currentSong?._id !== song._id) {
+    audio.src = song.audioUrl;
+    setCurrentSong(song);
+  }
+
+  audio.play();
+  setIsPlaying(true);
+
+  // 🧠 Log the play
+  const token = localStorage.getItem("token");
+  if (token && song._id) {
+    try {
+      await fetch(`${import.meta.env.VITE_API_BASE_URL}/stats/log`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ songId: song._id }),
+      });
+    } catch (err) {
+      console.error("Failed to log play:", err);
     }
-    audio.play();
-    setIsPlaying(true);
-  };
+  }
+};
+
 
   const togglePlay = () => {
     const audio = audioRef.current;
     if (isPlaying) {
       audio.pause();
-      setIsPlaying(false);
     } else {
       audio.play();
-      setIsPlaying(true);
     }
+    setIsPlaying(!isPlaying);
   };
 
   const seek = (time) => {
@@ -56,6 +91,27 @@ export default function PlayerProvider({ children }) {
   const skip = (seconds) => {
     const audio = audioRef.current;
     audio.currentTime = Math.min(audio.duration, Math.max(0, audio.currentTime + seconds));
+  };
+
+  // ⏭ Next / ⏮ Previous
+  const nextSong = () => {
+    if (!playlist.length) return;
+    const next = currentIndex + 1;
+    if (next < playlist.length) {
+      setCurrentIndex(next);
+      playSong(playlist[next]);
+    } else {
+      // optional loop
+      setCurrentIndex(0);
+      playSong(playlist[0]);
+    }
+  };
+
+  const prevSong = () => {
+    if (!playlist.length) return;
+    const prev = currentIndex > 0 ? currentIndex - 1 : playlist.length - 1;
+    setCurrentIndex(prev);
+    playSong(playlist[prev]);
   };
 
   const value = {
@@ -69,6 +125,8 @@ export default function PlayerProvider({ children }) {
     togglePlay,
     seek,
     skip,
+    nextSong,
+    prevSong,
   };
 
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
