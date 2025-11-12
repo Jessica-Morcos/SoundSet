@@ -38,7 +38,7 @@ router.get("/frequency", authMiddleware, async (req, res) => {
       {
         $lookup: {
           from: "songs",
-          localField: "_id", // matches _id in songs
+          localField: "_id",
           foreignField: "_id",
           as: "songInfo",
         },
@@ -46,13 +46,15 @@ router.get("/frequency", authMiddleware, async (req, res) => {
       { $unwind: { path: "$songInfo", preserveNullAndEmptyArrays: true } },
       {
         $project: {
-          _id: 1,
+          _id: 0,
+          songId: "$_id",
+          title: "$songInfo.title",
+          artist: "$songInfo.artist",
+          genre: "$songInfo.genre",
           count: 1,
-          "songInfo.title": 1,
-          "songInfo.artist": 1,
-          "songInfo.genre": 1,
         },
       },
+      { $sort: { count: -1 } },
     ]);
     res.json(data);
   } catch (err) {
@@ -60,6 +62,7 @@ router.get("/frequency", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Failed to fetch frequency stats" });
   }
 });
+
 
 // ✅ Most played artists
 router.get("/artist", authMiddleware, async (req, res) => {
