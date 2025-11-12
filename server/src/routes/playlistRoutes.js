@@ -6,7 +6,7 @@ import {
   getPlaylistById,
   togglePublic,
   clonePlaylist,
-  listPublicPlaylists, // ✅ added
+  listPublicPlaylists,
 } from "../controllers/playlistController.js";
 import { authMiddleware } from "../middleware/auth.js";
 
@@ -15,6 +15,12 @@ const router = express.Router();
 // ✅ Public discover endpoint (must come FIRST)
 router.get("/discover", listPublicPlaylists);
 
+// ✅ Debug route (keep above :id)
+router.get("/debug/public", async (req, res) => {
+  const playlists = await Playlist.find().select("name isPublic owner");
+  res.json(playlists);
+});
+
 // ✅ Authenticated playlist routes
 router.post("/", authMiddleware, createPlaylist);
 router.get("/mine", authMiddleware, getMyPlaylists);
@@ -22,12 +28,7 @@ router.put("/:id/publish", authMiddleware, togglePublic);
 router.post("/:id/clone", authMiddleware, clonePlaylist);
 router.get("/:id", authMiddleware, getPlaylistById);
 
-
-router.get("/debug/public", async (req, res) => {
-  const playlists = await Playlist.find().select("name isPublic owner");
-  res.json(playlists);
-});
-
+// ✅ Delete playlist
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     const playlist = await Playlist.findById(req.params.id);
