@@ -91,10 +91,13 @@ export const clonePlaylist = async (req, res) => {
     });
 
     await cloned.save();
+    await cloned.populate("owner", "username role");
+
     res.status(201).json({
       message: "Playlist added to your account!",
       playlist: cloned,
     });
+
   } catch (err) {
     console.error("Error cloning playlist:", err);
     res.status(500).json({ message: "Failed to clone playlist" });
