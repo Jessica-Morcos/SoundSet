@@ -1,6 +1,7 @@
 // server/src/controllers/songController.js
 import Song from "../models/Song.js";
 import User from "../models/User.js";
+import mongoose from "mongoose";
 
 // ✅ Get all songs (users see unrestricted, admins see all)
 export const listSongs = async (req, res) => {
