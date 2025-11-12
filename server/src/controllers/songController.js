@@ -2,7 +2,7 @@
 import Song from "../models/Song.js";
 import User from "../models/User.js";
 
-// ✅ Get all songs (users see unrestricted, admins see all)
+// Get all songs (users see unrestricted, admins see all)
 export const listSongs = async (req, res) => {
   try {
     const { genre, year, classification, q, restricted } = req.query;
@@ -27,53 +27,72 @@ export const listSongs = async (req, res) => {
   }
 };
 
-// Personalized suggestions (based on history + preferences)
+// Advanced personalized suggestions (weighted by recency + preferences)
 export const suggestSongs = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).populate("history.song");
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const filter = { restricted: false };
-    const matchGenres = new Set();
-    const matchArtists = new Set();
+    const now = new Date();
+    const genreScores = {};
+    const artistScores = {};
 
-    // Gather genres/artists from listening history
+    // Score genres/artists based on play frequency & recency
     user.history.forEach((entry) => {
-      const s = entry.song;
-      if (!s) return;
-      if (s.genre) matchGenres.add(s.genre);
-      if (s.artist) matchArtists.add(s.artist);
+      const song = entry.song;
+      if (!song) return;
+
+      const daysAgo = (now - new Date(entry.playedAt)) / (1000 * 60 * 60 * 24);
+      // Decay factor: recent plays matter more (7 days = full weight, 30+ = less)
+      const recencyWeight = Math.max(0.2, 1 - daysAgo / 30);
+
+      const score = entry.count * recencyWeight;
+
+      if (song.genre)
+        genreScores[song.genre] = (genreScores[song.genre] || 0) + score;
+      if (song.artist)
+        artistScores[song.artist] = (artistScores[song.artist] || 0) + score;
     });
 
-    // Add preferences (genres/bands/years)
-    if (user.preferences.genres?.length)
-      user.preferences.genres.forEach((g) => matchGenres.add(g));
-    if (user.preferences.bands?.length)
-      user.preferences.bands.forEach((b) => matchArtists.add(b));
+    //  Add small boost for user preferences
+    const prefBoost = 2; // tune if needed
+    user.preferences.genres?.forEach(
+      (g) => (genreScores[g] = (genreScores[g] || 0) + prefBoost)
+    );
+    user.preferences.bands?.forEach(
+      (a) => (artistScores[a] = (artistScores[a] || 0) + prefBoost)
+    );
 
+    // Determine top scoring genres/artists
+    const topGenres = Object.entries(genreScores)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([g]) => g);
+    const topArtists = Object.entries(artistScores)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([a]) => a);
+
+    // Build filter combining history + preferences
     const matchYears = user.preferences.years?.length
       ? user.preferences.years
       : [];
 
-    // Build main query
     const orConditions = [];
-    if (matchGenres.size > 0)
-      orConditions.push({ genre: { $in: Array.from(matchGenres) } });
-    if (matchArtists.size > 0)
-      orConditions.push({ artist: { $in: Array.from(matchArtists) } });
-    if (matchYears.length > 0)
-      orConditions.push({ year: { $in: matchYears } });
+    if (topGenres.length) orConditions.push({ genre: { $in: topGenres } });
+    if (topArtists.length) orConditions.push({ artist: { $in: topArtists } });
+    if (matchYears.length) orConditions.push({ year: { $in: matchYears } });
 
-    // Fetch matching songs
+    // Query matching unrestricted songs
     let suggestions = [];
     if (orConditions.length > 0) {
       suggestions = await Song.find({
-        ...filter,
+        restricted: false,
         $or: orConditions,
-      }).limit(15);
+      }).limit(20);
     }
 
-    //  If not enough, fill with random unrestricted songs
+    //  Fill with random unrestricted songs if not enough
     if (suggestions.length < 10) {
       const extra = await Song.aggregate([
         { $match: { restricted: false } },
@@ -82,12 +101,21 @@ export const suggestSongs = async (req, res) => {
       suggestions = [...suggestions, ...extra];
     }
 
+    // Sort final list by weighted “score” if applicable
+    suggestions.sort((a, b) => {
+      const gScore = (genreScores[b.genre] || 0) - (genreScores[a.genre] || 0);
+      const aScore =
+        (artistScores[b.artist] || 0) - (artistScores[a.artist] || 0);
+      return gScore + aScore;
+    });
+
     res.json(suggestions);
   } catch (err) {
     console.error("Error suggesting songs:", err);
     res.status(500).json({ message: "Failed to suggest songs" });
   }
 };
+
 
 
 // ✅ Admin: Create song
