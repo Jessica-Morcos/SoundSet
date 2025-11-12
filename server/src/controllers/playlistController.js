@@ -1,18 +1,16 @@
-// server/src/controllers/playlistController.js
 import Playlist from "../models/Playlist.js";
 import Song from "../models/Song.js";
 
-const MIN_SEC = 0;      // 1 hour
-const MAX_SEC = 3 * 60 * 60;  // 3 hours
+const MIN_SEC = 0;
+const MAX_SEC = 3 * 60 * 60; // 3 hours
 
+// ✅ Create new playlist
 export const createPlaylist = async (req, res) => {
   try {
     const { name, songs, classification } = req.body;
-    // songs: [{songId, order}]
-    const songDocs = await Song.find({ _id: { $in: songs.map(s => s.songId) } });
+    const songDocs = await Song.find({ _id: { $in: songs.map((s) => s.songId) } });
 
     const totalDurationSec = songDocs.reduce((sum, s) => sum + s.durationSec, 0);
-
     if (totalDurationSec < MIN_SEC || totalDurationSec > MAX_SEC) {
       return res.status(400).json({ message: "Playlist must be between 1 and 3 hours." });
     }
@@ -20,9 +18,9 @@ export const createPlaylist = async (req, res) => {
     const playlist = await Playlist.create({
       name,
       owner: req.user._id,
-      songs: songs.map(s => ({ song: s.songId, order: s.order })),
+      songs: songs.map((s) => ({ song: s.songId, order: s.order })),
       totalDurationSec,
-      classification
+      classification,
     });
 
     res.status(201).json(playlist);
@@ -31,12 +29,13 @@ export const createPlaylist = async (req, res) => {
   }
 };
 
+// ✅ Get logged-in user playlists
 export const getMyPlaylists = async (req, res) => {
   const lists = await Playlist.find({ owner: req.user._id }).populate("songs.song");
   res.json(lists);
 };
 
-//  Toggle playlist public/private (DJ only)
+// ✅ Toggle public/private (DJ/Admin only)
 export const togglePublic = async (req, res) => {
   try {
     const playlist = await Playlist.findById(req.params.id);
@@ -48,6 +47,7 @@ export const togglePublic = async (req, res) => {
 
     playlist.isPublic = !playlist.isPublic;
     await playlist.save();
+
     res.json({
       message: `Playlist is now ${playlist.isPublic ? "public" : "private"}`,
       playlist,
@@ -58,8 +58,7 @@ export const togglePublic = async (req, res) => {
   }
 };
 
-
-  // ✅ Clone a public playlist into the current user's account
+// ✅ Clone a public playlist into the current user's account
 export const clonePlaylist = async (req, res) => {
   try {
     const sourcePlaylist = await Playlist.findById(req.params.id).populate("songs.song");
@@ -71,7 +70,6 @@ export const clonePlaylist = async (req, res) => {
       return res.status(403).json({ message: "This playlist is not public" });
     }
 
-    // Check if the user already has this playlist cloned
     const existing = await Playlist.findOne({
       owner: req.user._id,
       name: `${sourcePlaylist.name} (Copy)`,
@@ -80,7 +78,6 @@ export const clonePlaylist = async (req, res) => {
       return res.status(400).json({ message: "You already added this playlist." });
     }
 
-    // Create cloned playlist
     const cloned = new Playlist({
       owner: req.user._id,
       name: `${sourcePlaylist.name} (Copy)`,
@@ -90,7 +87,7 @@ export const clonePlaylist = async (req, res) => {
         order: entry.order,
       })),
       totalDurationSec: sourcePlaylist.totalDurationSec,
-      isPublic: false, // copies are private by default
+      isPublic: false,
     });
 
     await cloned.save();
@@ -104,9 +101,7 @@ export const clonePlaylist = async (req, res) => {
   }
 };
 
-
-
-// ✅ Get single playlist by ID (auto-filters out restricted/deleted songs)
+// ✅ Get a single playlist (owner access only)
 export const getPlaylistById = async (req, res) => {
   try {
     const playlist = await Playlist.findById(req.params.id).populate("songs.song");
@@ -114,12 +109,10 @@ export const getPlaylistById = async (req, res) => {
       return res.status(404).json({ message: "Playlist not found" });
     }
 
-    // ✅ Security check — only owner can view
     if (playlist.owner.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Unauthorized access" });
     }
 
-    // ✅ Filter out songs that are deleted or locked (restricted)
     playlist.songs = playlist.songs.filter(
       (entry) => entry.song && entry.song.restricted === false
     );
@@ -131,3 +124,17 @@ export const getPlaylistById = async (req, res) => {
   }
 };
 
+// ✅ NEW: List all public playlists (for Discover)
+export const listPublicPlaylists = async (req, res) => {
+  try {
+    const playlists = await Playlist.find({ isPublic: true })
+      .populate("owner", "username role")
+      .populate("songs.song")
+      .sort({ updatedAt: -1 });
+
+    res.json(playlists);
+  } catch (err) {
+    console.error("Error fetching public playlists:", err);
+    res.status(500).json({ message: "Failed to load public playlists" });
+  }
+};
