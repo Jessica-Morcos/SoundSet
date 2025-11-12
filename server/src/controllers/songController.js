@@ -27,37 +27,59 @@ export const listSongs = async (req, res) => {
   }
 };
 
-// ✅ Personalized suggestions
+// Personalized suggestions (based on history + preferences)
 export const suggestSongs = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).populate("history.song");
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    if (user.history.length === 0) {
-      const random = await Song.aggregate([{ $match: { restricted: false } }, { $sample: { size: 10 } }]);
-      return res.json(random);
-    }
+    const filter = { restricted: false };
+    const matchGenres = new Set();
+    const matchArtists = new Set();
 
-    const genreCounts = {};
-    const artistCounts = {};
+    // Gather genres/artists from listening history
     user.history.forEach((entry) => {
       const s = entry.song;
       if (!s) return;
-      if (s.genre) genreCounts[s.genre] = (genreCounts[s.genre] || 0) + entry.count;
-      if (s.artist) artistCounts[s.artist] = (artistCounts[s.artist] || 0) + entry.count;
+      if (s.genre) matchGenres.add(s.genre);
+      if (s.artist) matchArtists.add(s.artist);
     });
 
-    const topGenre = Object.entries(genreCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
-    const topArtist = Object.entries(artistCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+    // Add preferences (genres/bands/years)
+    if (user.preferences.genres?.length)
+      user.preferences.genres.forEach((g) => matchGenres.add(g));
+    if (user.preferences.bands?.length)
+      user.preferences.bands.forEach((b) => matchArtists.add(b));
 
-    let suggestions = await Song.find({
-      restricted: false,
-      $or: [{ genre: topGenre }, { artist: topArtist }],
-    }).limit(10);
+    const matchYears = user.preferences.years?.length
+      ? user.preferences.years
+      : [];
 
-    if (suggestions.length < 5) {
-      const random = await Song.aggregate([{ $match: { restricted: false } }, { $sample: { size: 5 } }]);
-      suggestions = [...suggestions, ...random];
+    // Build main query
+    const orConditions = [];
+    if (matchGenres.size > 0)
+      orConditions.push({ genre: { $in: Array.from(matchGenres) } });
+    if (matchArtists.size > 0)
+      orConditions.push({ artist: { $in: Array.from(matchArtists) } });
+    if (matchYears.length > 0)
+      orConditions.push({ year: { $in: matchYears } });
+
+    // Fetch matching songs
+    let suggestions = [];
+    if (orConditions.length > 0) {
+      suggestions = await Song.find({
+        ...filter,
+        $or: orConditions,
+      }).limit(15);
+    }
+
+    //  If not enough, fill with random unrestricted songs
+    if (suggestions.length < 10) {
+      const extra = await Song.aggregate([
+        { $match: { restricted: false } },
+        { $sample: { size: 10 - suggestions.length } },
+      ]);
+      suggestions = [...suggestions, ...extra];
     }
 
     res.json(suggestions);
@@ -66,6 +88,7 @@ export const suggestSongs = async (req, res) => {
     res.status(500).json({ message: "Failed to suggest songs" });
   }
 };
+
 
 // ✅ Admin: Create song
 export const createSong = async (req, res) => {
