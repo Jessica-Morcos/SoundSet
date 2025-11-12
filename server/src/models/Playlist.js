@@ -11,7 +11,12 @@ const playlistSchema = new mongoose.Schema({
   owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   songs: [playlistSongSchema],  // <-- this should store references only
   totalDurationSec: { type: Number, default: 0 },
-  classification: String,
+  classification: {
+  type: String,
+  enum: ["general", "wedding", "corporate", "birthday", "club", "charity", "custom"],
+  default: "general",
+},
+
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 
