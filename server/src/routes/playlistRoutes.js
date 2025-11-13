@@ -11,6 +11,7 @@ import {
   listPublicPlaylists,
 } from "../controllers/playlistController.js";
 import { authMiddleware } from "../middleware/auth.js";
+import Song from "../models/Song.js";
 
 const router = express.Router();
 
@@ -102,6 +103,61 @@ router.put("/:id", authMiddleware, async (req, res) => {
   } catch (err) {
     console.error("Error updating playlist:", err);
     res.status(500).json({ message: err.message });
+  }
+});
+// ⭐ Add a song to an existing playlist
+router.post("/:id/add", authMiddleware, async (req, res) => {
+  try {
+    const playlist = await Playlist.findById(req.params.id);
+    if (!playlist) return res.status(404).json({ message: "Playlist not found" });
+
+    // Only owner can add songs
+    if (playlist.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    const { songId } = req.body;
+    if (!songId) return res.status(400).json({ message: "songId is required" });
+
+    const song = await Song.findById(songId);
+    if (!song) return res.status(404).json({ message: "Song not found" });
+
+    // Prevent duplicates
+    const exists = playlist.songs.some((entry) => entry.song.toString() === songId);
+    if (exists) {
+      return res.status(400).json({ message: "Song already in playlist" });
+    }
+
+    // Add song at end
+    playlist.songs.push({
+      song: songId,
+      order: playlist.songs.length,
+    });
+
+    // Recalculate duration
+    const songDocs = await Song.find({
+      _id: { $in: playlist.songs.map((s) => s.song) }
+    });
+    playlist.totalDurationSec = songDocs.reduce((sum, s) => sum + s.durationSec, 0);
+
+    // Validate max duration
+    if (playlist.totalDurationSec > 3 * 60 * 60) {
+      return res.status(400).json({
+        message: "Playlist cannot exceed 3 hours total duration",
+      });
+    }
+
+    await playlist.save();
+    await playlist.populate("songs.song");
+
+    res.json({
+      message: "Song added to playlist!",
+      playlist,
+    });
+
+  } catch (err) {
+    console.error("Error adding song:", err);
+    res.status(500).json({ message: "Failed to add song" });
   }
 });
 

@@ -1,6 +1,5 @@
 import User from "../models/User.js";
 
-// ✅ Existing admin functions remain
 export const listUsers = async (req, res) => {
   if (req.user.role !== "admin") return res.sendStatus(403);
   const users = await User.find().select("-passwordHash");
@@ -28,7 +27,7 @@ export const deleteUser = async (req, res) => {
   res.json({ message: "User deleted successfully" });
 };
 
-// ✅ NEW: Get preferences (for logged-in user)
+
 export const getPreferences = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select("preferences");
@@ -39,7 +38,7 @@ export const getPreferences = async (req, res) => {
   }
 };
 
-// ✅ NEW: Update preferences
+
 export const updatePreferences = async (req, res) => {
   try {
     const { genres, bands, years } = req.body;
