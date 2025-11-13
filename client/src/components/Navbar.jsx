@@ -1,5 +1,5 @@
 import { useLocation } from "react-router-dom";
-import logo from "../assets/logoLongWhite.png"; // ✅ Make sure this path matches your project
+import logo from "../assets/logoLongWhite.png";
 
 export default function Navbar() {
   const location = useLocation();
@@ -21,7 +21,6 @@ export default function Navbar() {
           alt="SoundSet Logo"
           className="h-15 w-auto drop-shadow-md"
         />
-       
       </div>
 
       {/* ✅ Right section - Links */}
@@ -33,11 +32,16 @@ export default function Navbar() {
         <a href="/suggest" className={linkClasses("/suggest")}>
           Suggest
         </a>
+        
+        <a href="/discover" className={linkClasses("/discover")}>
+          Discover
+        </a>
 
         <a href="/playlist-builder" className={linkClasses("/playlist-builder")}>
           Create Playlist
         </a>
 
+     
         {/* ✅ Admin-only links */}
         {role === "admin" && (
           <>

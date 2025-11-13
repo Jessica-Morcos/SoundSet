@@ -17,6 +17,10 @@ import AdminSongs from "./pages/AdminSongs.jsx";
 import AdminUsers from "./pages/AdminUsers.jsx";
 import PlayerProvider from "./context/PlayerContext";
 import PlayerBar from "./components/PlayerBar.jsx";
+import Discover from "./pages/Discover.jsx";
+import DiscoverProfile from "./pages/DiscoverProfile.jsx";
+
+
 
 function AppContent() {
   const location = useLocation();
@@ -44,12 +48,15 @@ function AppContent() {
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<Login />} />
             <Route path="/login" element={<Login />} />
+         
             <Route path="/register" element={<Register />} />
 
             {/* 🔐 Admin Routes */}
             <Route path="/admin/songs" element={<AdminSongs />} />
             <Route path="/admin/users" element={<AdminUsers />} />
 
+          <Route path="/discover" element={<Discover />} />
+          <Route path="/discover/:id" element={<DiscoverProfile />} />
             {/* 🎵 User Routes */}
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/suggest" element={<Suggest />} />

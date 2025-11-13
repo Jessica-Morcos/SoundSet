@@ -1,8 +1,8 @@
+// src/pages/PlaylistView.jsx
 import { useEffect, useState, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getPlaylistById, updatePlaylist, deletePlaylist } from "../api/playlist";
 import { getAllSongs } from "../api/songs";
-import { logPlay } from "../api/stats";
 import toast from "react-hot-toast";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { PlayerContext } from "../context/PlayerContext";
@@ -15,26 +15,60 @@ export default function PlaylistView() {
   const [selectedSongs, setSelectedSongs] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+  const [userId, setUserId] = useState(null);
 
   // Filters
   const [genreFilter, setGenreFilter] = useState("");
   const [artistFilter, setArtistFilter] = useState("");
   const [yearFilter, setYearFilter] = useState("");
 
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const { playSong } = useContext(PlayerContext);
 
+  // Get user (role + id)
   useEffect(() => {
     const token = localStorage.getItem("token");
-    Promise.all([getPlaylistById(id, token), getAllSongs(token)]).then(
-      ([pl, allSongs]) => {
+    if (!token) return;
+    fetch(`${BASE_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : Promise.reject("Failed to fetch role")))
+      .then((data) => {
+        setUserRole(data.role);
+        setUserId(data._id);
+      })
+      .catch((err) => console.error("Error fetching user:", err));
+  }, [BASE_URL]);
+
+  // Load playlist + all songs
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    Promise.all([getPlaylistById(id, token), getAllSongs(token)])
+      .then(([pl, allSongs]) => {
+        if (!pl || !pl.songs) {
+          toast.error("Playlist not found or not accessible.");
+          navigate("/discover");
+          return;
+        }
         setPlaylist(pl);
         setSongs(allSongs);
         setSelectedSongs(pl.songs.map((s) => s.song._id));
-      }
-    );
-  }, [id]);
+      })
+      .catch((err) => {
+        console.error("Error loading playlist:", err);
+        toast.error("Could not load playlist");
+      });
+  }, [id, navigate]);
 
-  // ✅ Save edited playlist
+  // keep selectedSongs in sync if playlist.songs gets refreshed externally
+  useEffect(() => {
+    if (playlist?.songs) {
+      setSelectedSongs(playlist.songs.map((s) => s.song._id));
+    }
+  }, [playlist?._id, playlist?.songs?.length]);
+
+  // Save edits (owner only)
   const handleSaveChanges = async () => {
     const token = localStorage.getItem("token");
     toast.loading("Saving changes...");
@@ -43,19 +77,18 @@ export default function PlaylistView() {
         id,
         {
           name: playlist.name,
-          classification: playlist.classification, // 👈 added
+          classification: playlist.classification,
           songs: selectedSongs.map((songId, i) => ({ songId, order: i })),
         },
         token
       );
-
       toast.dismiss();
       if (res.message === "Playlist updated successfully") {
         toast.success("Playlist updated successfully!");
         setPlaylist(res.playlist);
         setIsEditing(false);
       } else {
-        toast.error("Update failed");
+        toast.error(res.message || "Update failed");
       }
     } catch (err) {
       toast.dismiss();
@@ -64,7 +97,7 @@ export default function PlaylistView() {
     }
   };
 
-  // ✅ Delete Playlist
+  // Delete (owner only)
   const confirmDelete = async () => {
     const token = localStorage.getItem("token");
     toast.loading("Deleting playlist...");
@@ -74,18 +107,61 @@ export default function PlaylistView() {
       if (res.message === "Playlist deleted successfully") {
         toast.success(`Deleted "${playlist.name}"`);
         setShowDeleteModal(false);
-        setTimeout(() => navigate("/dashboard"), 1000);
-      } else {
-        toast.error(res.message || "Failed to delete playlist");
-      }
+        setTimeout(() => navigate("/dashboard"), 800);
+      } else toast.error(res.message || "Failed to delete playlist");
     } catch (err) {
       toast.dismiss();
-      console.error("Error deleting playlist:", err);
       toast.error("Error deleting playlist");
     }
   };
 
-  // 🧠 Handle drag reorder
+  // Publish (DJ/Admin only)
+  const handleTogglePublish = async () => {
+    const token = localStorage.getItem("token");
+    toast.loading("Updating visibility...");
+    try {
+      const res = await fetch(`${BASE_URL}/playlist/${playlist._id}/publish`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      toast.dismiss();
+      if (res.ok) {
+        toast.success(data.message);
+        setPlaylist((p) => ({ ...p, isPublic: !p.isPublic }));
+      } else {
+        toast.error(data.message || "Failed to toggle publish");
+      }
+    } catch {
+      toast.dismiss();
+      toast.error("Server error while toggling playlist");
+    }
+  };
+
+  // Clone (for non-owners)
+  const handleClonePlaylist = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Please log in to add this playlist.");
+      return;
+    }
+    toast.loading("Adding playlist...");
+    try {
+      const res = await fetch(`${BASE_URL}/playlist/${playlist._id}/clone`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      toast.dismiss();
+      if (res.ok) toast.success(data.message || "Playlist added!");
+      else toast.error(data.message || "Failed to add playlist");
+    } catch {
+      toast.dismiss();
+      toast.error("Server error while cloning playlist.");
+    }
+  };
+
+  // Drag reorder
   const handleDragEnd = (result) => {
     if (!result.destination) return;
     const reordered = Array.from(selectedSongs);
@@ -94,13 +170,18 @@ export default function PlaylistView() {
     setSelectedSongs(reordered);
   };
 
-  if (!playlist)
+  if (!playlist || !playlist.songs)
     return (
       <p className="text-center mt-10 text-gray-300 animate-pulse">
         Loading playlist...
       </p>
     );
 
+  const isOwner =
+    (userId && playlist.owner?._id === userId) ||
+    (playlist.owner && playlist.owner === userId);
+
+  // Filters
   const filteredSongs = songs.filter((song) => {
     return (
       (!genreFilter || song.genre === genreFilter) &&
@@ -133,33 +214,97 @@ export default function PlaylistView() {
           )}
 
           <div className="flex gap-2">
-            <button
-              onClick={() => setIsEditing(!isEditing)}
-              className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-white rounded-lg"
-            >
-              {isEditing ? "Cancel" : "Edit"}
-            </button>
+            {isOwner ? (
+              <>
+                <button
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-white rounded-lg"
+                >
+                  {isEditing ? "Cancel" : "Edit"}
+                </button>
 
-            <button
-              onClick={() => setShowDeleteModal(true)}
-              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg"
-            >
-              Delete
-            </button>
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg"
+                >
+                  Delete
+                </button>
+
+                {(userRole === "dj" || userRole === "admin") && (
+                  <button
+                    onClick={handleTogglePublish}
+                    className={`px-4 py-2 rounded-lg text-white ${
+                      playlist.isPublic
+                        ? "bg-green-600 hover:bg-green-700"
+                        : "bg-gray-500 hover:bg-gray-600"
+                    }`}
+                  >
+                    {playlist.isPublic ? "Unpublish" : "Publish"}
+                  </button>
+                )}
+              </>
+            ) : (
+              !playlist.name.endsWith("(Copy)") && (
+                <button
+                  onClick={handleClonePlaylist}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
+                >
+                  ➕ Add to My Playlists
+                </button>
+              )
+            )}
           </div>
         </div>
 
-        {/* 👇 Classification Display in View Mode */}
-        {!isEditing && (
-          <p className="text-gray-500 mb-4 italic">
-            {playlist.classification || "general"}
-          </p>
-        )}
-
-        {/* Edit Mode */}
-        {isEditing ? (
+        {/* VIEW MODE */}
+        {!isEditing ? (
           <>
-            {/* 🎯 Classification Dropdown */}
+            <p className="text-gray-500 mb-4 italic">
+              {playlist.classification || "general"}
+            </p>
+            <p className="text-center text-gray-500 mb-6">
+              {playlist.songs.length} {playlist.songs.length === 1 ? "song" : "songs"}
+            </p>
+
+            <ul className="divide-y divide-gray-200">
+              {playlist.songs.map((entry, i) => (
+                <li
+                  key={i}
+                  className="flex justify-between items-center py-3 px-4 hover:bg-gray-100 rounded-lg transition"
+                >
+                  <div>
+                    <p className="font-semibold text-gray-800">
+                      {entry.song?.title || "Untitled Song"}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {entry.song?.artist || "Unknown Artist"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <p className="text-sm text-gray-400">
+                      {entry.song?.durationSec
+                        ? `${Math.floor(entry.song.durationSec / 60)}:${String(
+                            entry.song.durationSec % 60
+                          ).padStart(2, "0")}`
+                        : ""}
+                    </p>
+                    <button
+                      onClick={() =>
+                        playSong(entry.song, playlist.songs.map((s) => s.song))
+                      }
+                      className="px-3 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition"
+                    >
+                      ▶ Play
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          /* EDIT MODE */
+          <>
+            {/* Classification */}
             <div className="mb-4">
               <label className="block text-sm font-semibold text-gray-700 mb-1">
                 Classification
@@ -171,19 +316,13 @@ export default function PlaylistView() {
                 }
                 className="bg-white text-gray-700 px-3 py-2 rounded-lg border w-full"
               >
-                {[
-                  "general",
-                  "wedding",
-                  "corporate",
-                  "birthday",
-                  "club",
-                  "charity",
-             
-                ].map((c) => (
-                  <option key={c} value={c}>
-                    {c.charAt(0).toUpperCase() + c.slice(1)}
-                  </option>
-                ))}
+                {["general", "wedding", "corporate", "birthday", "club", "charity"].map(
+                  (c) => (
+                    <option key={c} value={c}>
+                      {c.charAt(0).toUpperCase() + c.slice(1)}
+                    </option>
+                  )
+                )}
               </select>
             </div>
 
@@ -240,7 +379,7 @@ export default function PlaylistView() {
               </button>
             </div>
 
-            {/* 🎵 Selected Songs Reorder */}
+            {/* Reorder current playlist */}
             <h3 className="text-lg font-semibold mb-2">Your Playlist</h3>
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId="playlist-songs">
@@ -262,14 +401,10 @@ export default function PlaylistView() {
                               {...prov.dragHandleProps}
                               className="flex justify-between items-center bg-white rounded-md p-2 mb-2 shadow-sm hover:shadow-md"
                             >
-                              <span>
-                                🎵 {song.title} — {song.artist}
-                              </span>
+                              <span>🎵 {song.title} — {song.artist}</span>
                               <button
                                 onClick={() =>
-                                  setSelectedSongs(
-                                    selectedSongs.filter((sid) => sid !== id)
-                                  )
+                                  setSelectedSongs((prev) => prev.filter((sid) => sid !== id))
                                 }
                                 className="text-red-500 font-bold"
                               >
@@ -286,33 +421,34 @@ export default function PlaylistView() {
               </Droppable>
             </DragDropContext>
 
-            {/* 🎧 Add Songs Section */}
+            {/* Add songs */}
             <h3 className="text-lg font-semibold mb-2">Add Songs</h3>
             <div className="max-h-64 overflow-y-auto border p-3 rounded-lg mb-4">
-              {filteredSongs.map((song) => (
-                <div
-                  key={song._id}
-                  className={`flex justify-between items-center py-2 px-3 rounded-md mb-1 transition ${
-                    selectedSongs.includes(song._id)
-                      ? "bg-gray-200 opacity-70 cursor-not-allowed"
-                      : "hover:bg-gray-100"
-                  }`}
-                >
-                  <span>
-                    {song.title} — {song.artist}
-                  </span>
-                  {!selectedSongs.includes(song._id) && (
-                    <button
-                      onClick={() =>
-                        setSelectedSongs([...selectedSongs, song._id])
-                      }
-                      className="text-green-500 font-bold"
-                    >
-                      ＋
-                    </button>
-                  )}
-                </div>
-              ))}
+              {filteredSongs.map((song) => {
+                const already = selectedSongs.includes(song._id);
+                return (
+                  <div
+                    key={song._id}
+                    className={`flex justify-between items-center py-2 px-3 rounded-md mb-1 transition ${
+                      already ? "bg-gray-200 opacity-70 cursor-not-allowed" : "hover:bg-gray-100"
+                    }`}
+                  >
+                    <span>{song.title} — {song.artist}</span>
+                    {!already && (
+                      <button
+                        onClick={() =>
+                          setSelectedSongs((prev) =>
+                            prev.includes(song._id) ? prev : [...prev, song._id]
+                          )
+                        }
+                        className="text-green-600 font-bold"
+                      >
+                        ＋
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             <div className="text-center">
@@ -324,47 +460,6 @@ export default function PlaylistView() {
               </button>
             </div>
           </>
-        ) : (
-          <>
-            <p className="text-center text-gray-500 mb-6">
-              {playlist.songs.length}{" "}
-              {playlist.songs.length === 1 ? "song" : "songs"}
-            </p>
-            <ul className="divide-y divide-gray-200">
-              {playlist.songs.map((entry, i) => (
-                <li
-                  key={i}
-                  className="flex justify-between items-center py-3 px-4 hover:bg-gray-100 rounded-lg transition"
-                >
-                  <div>
-                    <p className="font-semibold text-gray-800">
-                      {entry.song?.title || "Untitled Song"}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {entry.song?.artist || "Unknown Artist"}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <p className="text-sm text-gray-400">
-                      {entry.song?.durationSec
-                        ? `${Math.floor(entry.song.durationSec / 60)}:${
-                            entry.song.durationSec % 60
-                          }`
-                        : ""}
-                    </p>
-                    <button
-                      onClick={() =>
-                        playSong(entry.song, playlist.songs.map((s) => s.song))
-                      }
-                      className="px-3 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition"
-                    >
-                      ▶ Play
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </>
         )}
       </div>
 
@@ -372,15 +467,10 @@ export default function PlaylistView() {
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center">
-            <h2 className="text-xl font-bold text-gray-800 mb-3">
-              Delete Playlist?
-            </h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-3">Delete Playlist?</h2>
             <p className="text-gray-600 mb-6">
               Are you sure you want to permanently delete{" "}
-              <span className="font-semibold text-red-500">
-                "{playlist.name}"
-              </span>
-              ?
+              <span className="font-semibold text-red-500">"{playlist.name}"</span>?
             </p>
             <div className="flex justify-center gap-3">
               <button
