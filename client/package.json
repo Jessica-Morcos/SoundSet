@@ -18,7 +18,9 @@
     "react-dom": "^19.1.1",
     "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.9.5",
-    "recharts": "^3.3.0"
+    "recharts": "^3.3.0",
+    "@tailwindcss/vite": "^4.1.16",
+    "tailwindcss": "^4.1.16"
   },
   "optionalDependencies": {
     "@ast-grep/napi-linux-x64-gnu": "^0.39.4",
