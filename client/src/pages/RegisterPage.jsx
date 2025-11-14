@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { registerUser } from "../api/auth";
+import { Link } from "react-router-dom";
 
 export default function RegisterPage() {
   const [username, setUsername] = useState("");
@@ -15,7 +16,7 @@ export default function RegisterPage() {
   return (
     <div className="page">
       <h1>Register</h1>
-      <form onSubmit={handleRegister} >
+      <form onSubmit={handleRegister}>
         <input
           type="text"
           placeholder="Username"
@@ -31,7 +32,7 @@ export default function RegisterPage() {
         <button type="submit">Register</button>
       </form>
       <p>{message}</p>
-      <a href="/">Already have an account? Login</a>
+      <Link to="/">Already have an account? Login</Link>
     </div>
   );
 }

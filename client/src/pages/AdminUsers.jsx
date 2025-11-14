@@ -74,7 +74,7 @@ export default function AdminUsers() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br text-white p-10">
+    <div className="min-h-screen bg-gradient-to-br text-white p-10 pb-[10rem]">
       <h1 className="text-4xl font-bold text-center mb-6">User Management</h1>
 
       <div className="bg-white text-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-5xl mx-auto">

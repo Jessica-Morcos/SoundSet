@@ -58,13 +58,11 @@ export default function Dashboard() {
 
  
   return (
-    <div className="min-h-screen  text-white flex flex-col items-center p-8">
+    <div className="min-h-screen  text-white flex flex-col items-center p-8 pb-[10rem]">
       {/* Welcome Section */}
       <div className="w-full max-w-5xl text-left mb-8">
-        <h1 className="text-4xl font-bold mb-2">Welcome back,</h1>
-        <h2 className="text-2xl font-semibold text-yellow-300">
-          {user?.username || "User"} 👋
-        </h2>
+        <h1 className="text-4xl font-bold mb-2">Welcome back, {user?.username || "User"} ! </h1>
+       
       </div>
 
       {/* Playlists Section */}

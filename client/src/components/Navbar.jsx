@@ -1,9 +1,14 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
+import { useContext } from "react";
+import { PlayerContext } from "../context/PlayerContext";
 import logo from "../assets/logoLongWhite.png";
 
 export default function Navbar() {
   const location = useLocation();
   const role = localStorage.getItem("role");
+
+  // 🔥 pull resetPlayer() from the context
+  const { resetPlayer } = useContext(PlayerContext);
 
   const linkClasses = (path) =>
     `px-4 py-2 rounded-lg transition-all duration-200 ${
@@ -14,7 +19,8 @@ export default function Navbar() {
 
   return (
     <nav className="w-full bg-gradient-to-r from-[#5b3a9b] via-[#5b3a9b] to-[#5b3a9b] shadow-lg py-3 px-8 flex flex-wrap items-center justify-between">
-      {/* ✅ Left section - Logo */}
+
+      {/* LEFT - LOGO */}
       <div className="flex items-center gap-3">
         <img
           src={logo}
@@ -23,51 +29,52 @@ export default function Navbar() {
         />
       </div>
 
-      {/* ✅ Right section - Links */}
+      {/* RIGHT - NAV LINKS */}
       <div className="flex flex-wrap justify-center items-center gap-3 mt-3 md:mt-0">
-        <a href="/dashboard" className={linkClasses("/dashboard")}>
+        <Link to="/dashboard" className={linkClasses("/dashboard")}>
           Dashboard
-        </a>
+        </Link>
 
-        <a href="/suggest" className={linkClasses("/suggest")}>
+        <Link to="/suggest" className={linkClasses("/suggest")}>
           Suggest
-        </a>
-        
-        <a href="/discover" className={linkClasses("/discover")}>
+        </Link>
+
+        <Link to="/discover" className={linkClasses("/discover")}>
           Discover
-        </a>
+        </Link>
 
-        <a href="/playlist-builder" className={linkClasses("/playlist-builder")}>
+        <Link to="/playlist-builder" className={linkClasses("/playlist-builder")}>
           Create Playlist
-        </a>
+        </Link>
 
-     
-        {/* ✅ Admin-only links */}
+        {/* ADMIN ONLY */}
         {role === "admin" && (
           <>
-            <a href="/admin/songs" className={linkClasses("/admin/songs")}>
+            <Link to="/admin/songs" className={linkClasses("/admin/songs")}>
               Admin Panel
-            </a>
-            <a href="/admin/users" className={linkClasses("/admin/users")}>
+            </Link>
+            <Link to="/admin/users" className={linkClasses("/admin/users")}>
               Manage Users
-            </a>
+            </Link>
           </>
         )}
 
-        <a href="/stats" className={linkClasses("/stats")}>
+        <Link to="/stats" className={linkClasses("/stats")}>
           Stats
-        </a>
+        </Link>
 
-        <a
-          href="/"
+        {/* 🔥 LOGOUT: clears token + role + resets Player */}
+        <Link
+          to="/"
           onClick={() => {
             localStorage.removeItem("token");
             localStorage.removeItem("role");
+            resetPlayer();   // <<— THIS is what makes the PlayerBar disappear
           }}
           className="px-4 py-2 rounded-lg text-white bg-red-500 hover:bg-red-600 transition-all duration-200"
         >
           Logout
-        </a>
+        </Link>
       </div>
     </nav>
   );

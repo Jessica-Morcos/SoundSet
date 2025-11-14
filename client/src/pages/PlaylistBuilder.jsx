@@ -7,11 +7,13 @@ export default function PlaylistBuilder() {
   const [filtered, setFiltered] = useState([]);
   const [selected, setSelected] = useState([]);
   const [name, setName] = useState("");
-  const [classification, setClassification] = useState("general"); // 👈 new
+  const [classification, setClassification] = useState("general");
   const [genreFilter, setGenreFilter] = useState("");
   const [artistFilter, setArtistFilter] = useState("");
   const [yearFilter, setYearFilter] = useState("");
+  const [search, setSearch] = useState("");
 
+  // Load songs
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -25,22 +27,34 @@ export default function PlaylistBuilder() {
         setSongs(safe);
         setFiltered(safe);
       } else {
-        console.warn("Unexpected songs response:", data);
         setSongs([]);
         setFiltered([]);
       }
     });
   }, []);
 
+  // 🔍 Filters + search
   useEffect(() => {
     let result = songs;
+
     if (genreFilter) result = result.filter((s) => s.genre === genreFilter);
     if (artistFilter) result = result.filter((s) => s.artist === artistFilter);
-    if (yearFilter)
-      result = result.filter((s) => s.year === parseInt(yearFilter));
-    setFiltered(result);
-  }, [genreFilter, artistFilter, yearFilter, songs]);
+    if (yearFilter) result = result.filter((s) => s.year === parseInt(yearFilter));
 
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (s) =>
+          s.title.toLowerCase().includes(q) ||
+          s.artist.toLowerCase().includes(q) ||
+          (s.genre && s.genre.toLowerCase().includes(q))
+      );
+    }
+
+    setFiltered(result);
+  }, [genreFilter, artistFilter, yearFilter, search, songs]);
+
+  // ⭐ Re-add missing toggle function
   const toggleSong = (song) => {
     if (selected.find((s) => s._id === song._id)) {
       setSelected(selected.filter((s) => s._id !== song._id));
@@ -57,7 +71,7 @@ export default function PlaylistBuilder() {
 
     const data = {
       name,
-      classification, // 👈 now dynamic
+      classification,
       songs: selected.map((s, i) => ({ songId: s._id, order: i })),
     };
 
@@ -76,35 +90,28 @@ export default function PlaylistBuilder() {
     "birthday",
     "club",
     "charity",
-  
   ];
 
   return (
-    <div className="min-h-screen flex flex-col items-center py-10 px-6 text-white">
+    <div className="min-h-screen flex flex-col items-center py-10 px-6 text-white pb-[10rem]">
       <h1 className="text-4xl font-extrabold mb-4">Create Playlist</h1>
-      <p className="text-gray-200 mb-8">
-        Choose songs to build your custom playlist 🎧
-      </p>
+      <p className="text-gray-200 mb-8">Choose songs to build your custom playlist</p>
 
-      {/* Playlist name & classification */}
+      {/* Playlist name */}
       <div className="bg-white text-gray-800 rounded-2xl shadow-lg p-6 w-full max-w-2xl mb-10">
-        <label className="block text-sm font-semibold text-gray-600 mb-2">
-          Playlist Name
-        </label>
+        <label className="block text-sm font-semibold text-gray-600 mb-2">Playlist Name</label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Enter playlist name"
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none mb-4"
+          className="w-full p-3 border border-gray-300 rounded-lg mb-4"
         />
 
-        <label className="block text-sm font-semibold text-gray-600 mb-2">
-          Classification
-        </label>
+        <label className="block text-sm font-semibold text-gray-600 mb-2">Classification</label>
         <select
           value={classification}
           onChange={(e) => setClassification(e.target.value)}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none mb-4"
+          className="w-full p-3 border border-gray-300 rounded-lg mb-4"
         >
           {classifications.map((c) => (
             <option key={c} value={c}>
@@ -115,13 +122,13 @@ export default function PlaylistBuilder() {
 
         <button
           onClick={handleCreate}
-          className="bg-indigo-600 text-white font-semibold px-5 py-2 rounded-lg hover:bg-indigo-700 transition w-full"
+          className="bg-indigo-600 text-white font-semibold px-5 py-2 rounded-lg w-full hover:bg-indigo-700 transition"
         >
           Save Playlist
         </button>
       </div>
 
-      {/* 🔍 Filter Bar */}
+      {/* Filters */}
       <div className="flex flex-wrap justify-center gap-4 mb-8">
         <select
           value={genreFilter}
@@ -167,26 +174,38 @@ export default function PlaylistBuilder() {
             setGenreFilter("");
             setArtistFilter("");
             setYearFilter("");
+            setSearch("");
           }}
-          className="bg-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-300 transition"
+          className="bg-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-300"
         >
           Reset Filters
         </button>
       </div>
 
-      {/* Songs */}
+      {/* 🔍 Search Bar */}
+      <div className="w-full max-w-5xl mb-6">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search songs by title, artist, or genre..."
+          className="w-full p-3 bg-white text-gray-800 border border-gray-300 rounded-lg"
+        />
+      </div>
+
+      {/* Songs List */}
       <div className="w-full max-w-5xl">
         <h2 className="text-2xl font-bold mb-4 text-center">Available Songs</h2>
 
         {filtered.length === 0 ? (
-          <p className="text-center text-gray-300">No songs available yet.</p>
+          <p className="text-center text-gray-300">No songs found.</p>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filtered.map((song) => (
               <div
                 key={song._id}
                 onClick={() => toggleSong(song)}
-                className={`cursor-pointer bg-white text-gray-800 p-5 rounded-xl shadow-md transition transform hover:scale-[1.02] ${
+                className={`cursor-pointer bg-white text-gray-800 p-5 rounded-xl shadow-md transition ${
                   selected.find((s) => s._id === song._id)
                     ? "ring-4 ring-indigo-500"
                     : "hover:shadow-lg"

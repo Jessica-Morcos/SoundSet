@@ -5,7 +5,7 @@ export const PlayerContext = createContext();
 export default function PlayerProvider({ children }) {
   const audioRef = useRef(new Audio());
 
-  const [playlist, setPlaylist] = useState([]);       // all songs in current list
+  const [playlist, setPlaylist] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentSong, setCurrentSong] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -13,7 +13,7 @@ export default function PlayerProvider({ children }) {
   const [duration, setDuration] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Update progress continuously
+  // 🔄 Track progress
   useEffect(() => {
     const audio = audioRef.current;
     const updateProgress = () => {
@@ -28,7 +28,7 @@ export default function PlayerProvider({ children }) {
     };
   }, []);
 
-  // 🔁 Auto play next when current song ends
+  // 🔁 Auto-next on end
   useEffect(() => {
     const audio = audioRef.current;
     const handleEnded = () => nextSong();
@@ -36,50 +36,46 @@ export default function PlayerProvider({ children }) {
     return () => audio.removeEventListener("ended", handleEnded);
   }, [playlist, currentIndex]);
 
-  // ▶ Play a song (with optional playlist)
+  // ▶ Play a song
   const playSong = async (song, list = []) => {
-  const audio = audioRef.current;
+    const audio = audioRef.current;
 
-  if (list.length) {
-    setPlaylist(list);
-    const index = list.findIndex((s) => s._id === song._id);
-    setCurrentIndex(index >= 0 ? index : 0);
-  }
-
-  if (currentSong?._id !== song._id) {
-    audio.src = song.audioUrl;
-    setCurrentSong(song);
-  }
-
-  audio.play();
-  setIsPlaying(true);
-
-  // 🧠 Log the play
-  const token = localStorage.getItem("token");
-  if (token && song._id) {
-    try {
-      await fetch(`${import.meta.env.VITE_API_BASE_URL}/stats/log`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ songId: song._id }),
-      });
-    } catch (err) {
-      console.error("Failed to log play:", err);
+    if (list.length) {
+      setPlaylist(list);
+      const index = list.findIndex((s) => s._id === song._id);
+      setCurrentIndex(index >= 0 ? index : 0);
     }
-  }
-};
 
+    if (currentSong?._id !== song._id) {
+      audio.src = song.audioUrl;
+      setCurrentSong(song);
+    }
+
+    audio.play();
+    setIsPlaying(true);
+
+    // 🧠 Log play
+    const token = localStorage.getItem("token");
+    if (token && song._id) {
+      try {
+        await fetch(`${import.meta.env.VITE_API_BASE_URL}/stats/log`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ songId: song._id }),
+        });
+      } catch (err) {
+        console.error("Failed to log play:", err);
+      }
+    }
+  };
 
   const togglePlay = () => {
     const audio = audioRef.current;
-    if (isPlaying) {
-      audio.pause();
-    } else {
-      audio.play();
-    }
+    if (isPlaying) audio.pause();
+    else audio.play();
     setIsPlaying(!isPlaying);
   };
 
@@ -101,7 +97,6 @@ export default function PlayerProvider({ children }) {
       setCurrentIndex(next);
       playSong(playlist[next]);
     } else {
-      // optional loop
       setCurrentIndex(0);
       playSong(playlist[0]);
     }
@@ -114,6 +109,21 @@ export default function PlayerProvider({ children }) {
     playSong(playlist[prev]);
   };
 
+  // 🧹 CLEAR PLAYER WHEN LOGGING OUT
+  const resetPlayer = () => {
+    const audio = audioRef.current;
+    audio.pause();
+    audio.src = "";        // removes loaded audio
+
+    setPlaylist([]);
+    setCurrentSong(null);
+    setCurrentIndex(0);
+    setIsPlaying(false);
+    setProgress(0);
+    setDuration(0);
+    setIsFullscreen(false);
+  };
+
   const value = {
     currentSong,
     isPlaying,
@@ -121,12 +131,15 @@ export default function PlayerProvider({ children }) {
     duration,
     isFullscreen,
     setIsFullscreen,
+
     playSong,
     togglePlay,
     seek,
     skip,
     nextSong,
     prevSong,
+
+    resetPlayer,   // 👈 EXPORT IT
   };
 
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;

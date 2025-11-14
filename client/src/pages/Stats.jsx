@@ -67,8 +67,8 @@ export default function Stats() {
   const COLORS = ["#6366f1", "#ec4899", "#22c55e", "#f59e0b", "#06b6d4"];
 
   return (
-    <div className="min-h-screen text-white flex flex-col items-center py-10 px-6">
-      <h1 className="text-4xl font-extrabold mb-10">Your Listening Stats 🎧</h1>
+    <div className="min-h-screen text-white flex flex-col items-center py-10 px-6 pb-[10rem]">
+      <h1 className="text-4xl font-extrabold mb-10">Your Listening Stats</h1>
 
       <div className="grid md:grid-cols-2 gap-10 w-full max-w-6xl">
         {/* SONG FREQUENCY */}

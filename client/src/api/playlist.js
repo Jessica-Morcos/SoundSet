@@ -1,6 +1,5 @@
 const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/playlist`;
 
-
 export async function createPlaylist(data, token) {
   const res = await fetch(BASE_URL, {
     method: "POST",
@@ -25,6 +24,31 @@ export async function getPlaylistById(id, token) {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.json();
+}
+
+// ⭐ FIXED VERSION
+export async function addSongToPlaylist(playlistId, songId, token) {
+  const res = await fetch(`${BASE_URL}/${playlistId}/add`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ songId }),
+  });
+
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error("Server did not return JSON");
+  }
+
+  if (!res.ok) {
+    throw new Error(data.message || "Failed to add song");
+  }
+
+  return data;
 }
 
 // /src/api/playlist.js
@@ -56,8 +80,3 @@ export async function updatePlaylist(id, data, token) {
   });
   return res.json();
 }
-
-
-
-
-

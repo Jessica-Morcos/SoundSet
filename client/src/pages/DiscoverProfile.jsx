@@ -54,7 +54,7 @@ export default function DiscoverProfile() {
     );
 
   return (
-    <div className="p-10 text-white min-h-screen">
+    <div className="p-10 text-white min-h-screen pb-[10rem]">
       <h1 className="text-4xl font-bold mb-2 text-indigo-400">
         {profile.displayName || profile.user?.username}
       </h1>

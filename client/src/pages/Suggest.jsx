@@ -1,46 +1,86 @@
 import { useEffect, useState } from "react";
 import { getAllSongs } from "../api/songs";
 import { getMyPreferences, updateMyPreferences } from "../api/user";
+import { getMyPlaylists, addSongToPlaylist } from "../api/playlist";
 import toast from "react-hot-toast";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+const decadeToYears = {
+  "1990s": [1990,1991,1992,1993,1994,1995,1996,1997,1998,1999],
+  "2000s": [2000,2001,2002,2003,2004,2005,2006,2007,2008,2009],
+  "2010s": [2010,2011,2012,2013,2014,2015,2016,2017,2018,2019],
+  "2020s": [2020,2021,2022,2023,2024,2025,2026,2027,2028,2029],
+};
+
+// Convert list of years → decades
+const yearsToDecades = (years) => {
+  const result = new Set();
+  years.forEach((y) => {
+    if (y >= 1990 && y < 2000) result.add("1990s");
+    else if (y >= 2000 && y < 2010) result.add("2000s");
+    else if (y >= 2010 && y < 2020) result.add("2010s");
+    else if (y >= 2020 && y < 2030) result.add("2020s");
+  });
+  return [...result];
+};
+
 export default function Suggestions() {
   const [songs, setSongs] = useState([]);
+  const [playlists, setPlaylists] = useState([]);
+  const [openMenu, setOpenMenu] = useState(null);
+
   const [preferences, setPreferences] = useState({
     genres: [],
     bands: [],
     years: [],
   });
+
   const [options, setOptions] = useState({
     genres: [],
     bands: [],
     years: [],
   });
-  const [loading, setLoading] = useState(true);
 
+  const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token");
 
-  // 🔹 Load available genres/artists/years and current preferences
+  // Load preferences, playlists, decades
   useEffect(() => {
     async function loadData() {
       try {
-        const [songData, prefData] = await Promise.all([
+        const [songData, prefData, playlistData] = await Promise.all([
           getAllSongs(token),
           getMyPreferences(token),
+          getMyPlaylists(token),
         ]);
 
-        const genres = [...new Set(songData.map((s) => s.genre).filter(Boolean))];
-        const bands = [...new Set(songData.map((s) => s.artist).filter(Boolean))];
-        const years = [
-          ...new Set(songData.map((s) => s.year).filter((y) => y && !isNaN(y))),
-        ];
+        setPlaylists(playlistData || []);
 
-        setOptions({ genres, bands, years });
+        let genres = [...new Set(songData.map((s) => s.genre).filter(Boolean))]
+          .sort((a, b) => a.localeCompare(b));
+
+        let bands = [...new Set(songData.map((s) => s.artist).filter(Boolean))]
+          .sort((a, b) => a.localeCompare(b));
+
+        let years = [...new Set(songData.map((s) => s.year).filter((y) => y && !isNaN(y)))];
+
+        const decades = yearsToDecades(years).sort(
+          (a, b) =>
+            ["1990s", "2000s", "2010s", "2020s"].indexOf(a) -
+            ["1990s", "2000s", "2010s", "2020s"].indexOf(b)
+        );
+
+        setOptions({
+          genres,
+          bands,
+          years: decades,
+        });
+
         setPreferences({
           genres: prefData.genres || [],
           bands: prefData.bands || [],
-          years: prefData.years || [],
+          years: yearsToDecades(prefData.years || []),
         });
       } catch (err) {
         console.error(err);
@@ -49,25 +89,26 @@ export default function Suggestions() {
         setLoading(false);
       }
     }
+
     loadData();
   }, [token]);
 
-    useEffect(() => {
-      if (!token) return;
-      const loadSuggestions = async () => {
-        try {
-          const res = await fetch(`${BASE_URL}/songs/suggest`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const data = await res.json();
-          setSongs(data); // ✅ replace, never append
-        } catch (err) {
-          console.error(err);
-        }
-      };
-      loadSuggestions();
-    }, []); 
+  // Load suggestions after preferences load
+  useEffect(() => {
+    if (loading) return;
+    if (!token) return;
 
+    async function loadSuggestions() {
+      const res = await fetch(`${BASE_URL}/songs/suggest`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSongs(await res.json());
+    }
+
+    loadSuggestions();
+  }, [loading]);
+
+  // Toggle preferences
   const toggleValue = (field, value) => {
     setPreferences((prev) => ({
       ...prev,
@@ -77,59 +118,82 @@ export default function Suggestions() {
     }));
   };
 
+  // Save preferences
   const handleSave = async () => {
-  toast.loading("Saving preferences...");
-  try {
-    const res = await updateMyPreferences(preferences, token);
-    toast.dismiss();
-    toast.success("Preferences updated!");
-    setPreferences(res.preferences);
+    toast.loading("Saving preferences...");
 
-    setSongs([]); // clear
-    const refreshed = await fetch(`${BASE_URL}/songs/suggest`, {
-      headers: { Authorization: `Bearer ${token}` },
-    }).then(r => r.json());
-    setSongs(refreshed); // replace
+    const convertedYears = preferences.years.flatMap(
+      (d) => decadeToYears[d] || []
+    );
 
-  } catch (err) {
-    toast.dismiss();
-    toast.error("Failed to save preferences");
-  }
-};
+    try {
+      const payload = {
+        genres: preferences.genres,
+        bands: preferences.bands,
+        years: convertedYears,
+      };
 
+      const res = await updateMyPreferences(payload, token);
 
+      toast.dismiss();
+      toast.success("Preferences saved!");
 
+      setPreferences({
+        genres: res.preferences.genres,
+        bands: res.preferences.bands,
+        years: yearsToDecades(res.preferences.years),
+      });
+
+      const refreshed = await fetch(`${BASE_URL}/songs/suggest`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((r) => r.json());
+
+      setSongs(refreshed);
+    } catch {
+      toast.dismiss();
+      toast.error("Failed to save preferences");
+    }
+  };
+
+  // Add song to playlist
+  const handleAddSong = async (playlistId, songId) => {
+    try {
+      const res = await addSongToPlaylist(playlistId, songId, token);
+      toast.success(res.message || "Added!");
+      setOpenMenu(null);
+    } catch (err) {
+  toast.error(err.message || "Failed to add song.");
+}
+
+  };
 
   if (loading)
     return <p className="text-white text-center mt-10">Loading preferences...</p>;
 
   return (
-    <div className="p-8 text-white min-h-screen">
-      <h1 className="text-3xl font-bold mb-8">Your Music Preferences 🎶</h1>
+    <div className="p-8 text-white min-h-screen pb-[10rem]">
+      <h1 className="text-3xl font-bold mb-8">Your Music Preferences</h1>
 
-      {/* Preferences Section */}
+    
       <div className="bg-white text-gray-800 rounded-2xl p-6 w-full max-w-3xl mx-auto shadow-xl mb-10">
+
         {/* Genres */}
         <section className="mb-6">
           <h2 className="text-lg font-semibold mb-2">Favorite Genres</h2>
           <div className="flex flex-wrap gap-2">
-            {options.genres.length === 0 ? (
-              <p className="text-sm text-gray-500">No genres found</p>
-            ) : (
-              options.genres.map((g) => (
-                <button
-                  key={g}
-                  onClick={() => toggleValue("genres", g)}
-                  className={`px-3 py-1 rounded-full border ${
-                    preferences.genres.includes(g)
-                      ? "bg-indigo-600 text-white"
-                      : "bg-gray-100 text-gray-700"
-                  }`}
-                >
-                  {g}
-                </button>
-              ))
-            )}
+            {options.genres.map((g) => (
+              <button
+                key={g}
+                onClick={() => toggleValue("genres", g)}
+                className={`px-3 py-1 rounded-full border ${
+                  preferences.genres.includes(g)
+                    ? "bg-indigo-600 text-white"
+                    : "bg-gray-100 text-gray-700"
+                }`}
+              >
+                {g}
+              </button>
+            ))}
           </div>
         </section>
 
@@ -137,47 +201,39 @@ export default function Suggestions() {
         <section className="mb-6">
           <h2 className="text-lg font-semibold mb-2">Favorite Artists</h2>
           <div className="flex flex-wrap gap-2">
-            {options.bands.length === 0 ? (
-              <p className="text-sm text-gray-500">No artists found</p>
-            ) : (
-              options.bands.map((a) => (
-                <button
-                  key={a}
-                  onClick={() => toggleValue("bands", a)}
-                  className={`px-3 py-1 rounded-full border ${
-                    preferences.bands.includes(a)
-                      ? "bg-indigo-600 text-white"
-                      : "bg-gray-100 text-gray-700"
-                  }`}
-                >
-                  {a}
-                </button>
-              ))
-            )}
+            {options.bands.map((a) => (
+              <button
+                key={a}
+                onClick={() => toggleValue("bands", a)}
+                className={`px-3 py-1 rounded-full border ${
+                  preferences.bands.includes(a)
+                    ? "bg-indigo-600 text-white"
+                    : "bg-gray-100 text-gray-700"
+                }`}
+              >
+                {a}
+              </button>
+            ))}
           </div>
         </section>
 
-        {/* Years */}
+        {/* Decades */}
         <section className="mb-6">
-          <h2 className="text-lg font-semibold mb-2">Favorite Years</h2>
+          <h2 className="text-lg font-semibold mb-2">Favorite Decades</h2>
           <div className="flex flex-wrap gap-2">
-            {options.years.length === 0 ? (
-              <p className="text-sm text-gray-500">No years found</p>
-            ) : (
-              options.years.map((y) => (
-                <button
-                  key={y}
-                  onClick={() => toggleValue("years", y)}
-                  className={`px-3 py-1 rounded-full border ${
-                    preferences.years.includes(y)
-                      ? "bg-indigo-600 text-white"
-                      : "bg-gray-100 text-gray-700"
-                  }`}
-                >
-                  {y}
-                </button>
-              ))
-            )}
+            {options.years.map((d) => (
+              <button
+                key={d}
+                onClick={() => toggleValue("years", d)}
+                className={`px-3 py-1 rounded-full border ${
+                  preferences.years.includes(d)
+                    ? "bg-indigo-600 text-white"
+                    : "bg-gray-100 text-gray-700"
+                }`}
+              >
+                {d}
+              </button>
+            ))}
           </div>
         </section>
 
@@ -191,8 +247,10 @@ export default function Suggestions() {
         </div>
       </div>
 
-      {/* Recommended Songs */}
+      {/* ----------------- RECOMMENDED SONGS + ADD BUTTON ----------------- */}
+
       <h2 className="text-3xl font-bold mb-6">Recommended For You 🎧</h2>
+
       {songs.length === 0 ? (
         <p>No suggestions yet. Play more songs!</p>
       ) : (
@@ -200,11 +258,42 @@ export default function Suggestions() {
           {songs.map((song) => (
             <li
               key={song._id}
-              className="bg-white text-gray-800 rounded-xl shadow-lg p-5 hover:scale-[1.02] transition"
+              className="bg-white text-gray-800 rounded-xl shadow-lg p-5 relative"
             >
+              {/* + BUTTON */}
+              <button
+                onClick={() =>
+                  setOpenMenu((prev) => (prev === song._id ? null : song._id))
+                }
+                className="absolute top-3 right-3 bg-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-indigo-700"
+              >
+                +
+              </button>
+
               <h3 className="text-lg font-bold">{song.title}</h3>
               <p>{song.artist}</p>
               <p className="text-sm text-gray-500">{song.genre}</p>
+
+              {/* DROPDOWN MENU */}
+              {openMenu === song._id && (
+                <div className="absolute top-12 right-3 bg-white text-gray-800 shadow-xl rounded-lg p-3 w-48 z-50">
+                  <p className="font-semibold mb-2">Add to playlist:</p>
+
+                  {playlists.length === 0 ? (
+                    <p className="text-sm text-gray-500">No playlists yet.</p>
+                  ) : (
+                    playlists.map((pl) => (
+                      <button
+                        key={pl._id}
+                        onClick={() => handleAddSong(pl._id, song._id)}
+                        className="block w-full text-left px-2 py-1 rounded hover:bg-gray-100"
+                      >
+                        {pl.name}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
             </li>
           ))}
         </ul>

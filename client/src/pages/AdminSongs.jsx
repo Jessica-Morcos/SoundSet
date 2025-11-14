@@ -137,8 +137,8 @@ export default function AdminSongs() {
   };
 
   return (
-    <div className="min-h-screen text-white py-10 px-6 flex flex-col items-center">
-      <h1 className="text-4xl font-extrabold mb-6">Admin Song Management ⚙️</h1>
+    <div className="min-h-screen text-white py-10 px-6 flex flex-col items-center pb-[10rem]">
+      <h1 className="text-4xl font-extrabold mb-6">Admin Song Management </h1>
 
       {/* Filters */}
       <div className="flex flex-wrap justify-center gap-3 mb-6">

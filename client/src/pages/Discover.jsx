@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -13,9 +14,9 @@ export default function Discover() {
   }, []);
 
   return (
-    <div className="p-10 text-white min-h-screen">
+    <div className="p-10 text-white min-h-screen pb-[10rem]">
       <h1 className="text-4xl font-bold mb-8 text-center text-indigo-300">
-        🌍 Discover Public Playlists
+        Discover Public Playlists
       </h1>
 
       {playlists.length === 0 ? (
@@ -37,12 +38,12 @@ export default function Discover() {
               <p className="text-sm text-gray-500 mb-4">
                 {pl.songs?.length || 0} songs
               </p>
-              <a
-                href={`/playlist/${pl._id}`}
+              <Link
+                to={`/playlist/${pl._id}`}
                 className="block bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg py-2 text-center"
               >
                 View Playlist
-              </a>
+              </Link>
             </div>
           ))}
         </div>
