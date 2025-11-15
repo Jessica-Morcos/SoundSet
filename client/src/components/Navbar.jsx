@@ -25,7 +25,7 @@ export default function Navbar() {
         <img
           src={logo}
           alt="SoundSet Logo"
-          className="h-15 w-auto drop-shadow-md"
+          className="h-10 w-auto drop-shadow-md"
         />
       </div>
 
