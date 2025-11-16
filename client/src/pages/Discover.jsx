@@ -15,7 +15,7 @@ export default function Discover() {
 
   return (
     <div className="p-10 text-white min-h-screen pb-[10rem]">
-      <h1 className="text-4xl font-bold mb-8 text-center text-indigo-300">
+      <h1 className="text-4xl font-bold mb-8 text-center text-white">
         Discover Public Playlists
       </h1>
 
