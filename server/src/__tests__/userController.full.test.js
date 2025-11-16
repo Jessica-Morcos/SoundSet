@@ -9,6 +9,7 @@ import {
   deleteUser,
   getPreferences,
   updatePreferences,
+  promoteUser,
 } from "../controllers/userController.js";
 
 // helper to create mock req/res
@@ -272,4 +273,83 @@ describe("👤 USER CONTROLLER — FULL COVERAGE", () => {
 
     User.findById = original;
   });
+  // ---------------- promoteUser (NEW FEATURE) ----------------
+describe("🔼 promoteUser — ROLE TOGGLING", () => {
+  test("returns 403 if non-admin calls promoteUser", async () => {
+    const { req, res } = makeReqRes({
+      user: { role: "user" },
+      params: { id: regularUser._id.toString() },
+    });
+
+    await promoteUser(req, res);
+    expect(res.statusCode).toBe(403);
+  });
+
+  test("returns 404 if target user does not exist", async () => {
+    const fakeId = new mongoose.Types.ObjectId().toString();
+    const { req, res } = makeReqRes({
+      user: { role: "admin" },
+      params: { id: fakeId },
+    });
+
+    await promoteUser(req, res);
+    expect(res.statusCode).toBe(404);
+    expect(res.jsonData.message).toBe("User not found");
+  });
+
+  test("DJ → becomes ADMIN", async () => {
+    const dj = await User.create({
+      username: "djtester",
+      passwordHash: "x",
+      role: "dj",
+    });
+
+    const { req, res } = makeReqRes({
+      user: { role: "admin" },
+      params: { id: dj._id.toString() },
+    });
+
+    await promoteUser(req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.jsonData.user.role).toBe("admin");
+
+    const refreshed = await User.findById(dj._id);
+    expect(refreshed.role).toBe("admin");
+  });
+
+  test("ADMIN → becomes DJ on second toggle", async () => {
+    const djAdmin = await User.create({
+      username: "adminDJ",
+      passwordHash: "x",
+      role: "admin",
+    });
+
+    const { req, res } = makeReqRes({
+      user: { role: "admin" },
+      params: { id: djAdmin._id.toString() },
+    });
+
+    await promoteUser(req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.jsonData.user.role).toBe("dj");
+  });
+
+  test("❌ User cannot become Admin directly", async () => {
+    const { req, res } = makeReqRes({
+      user: { role: "admin" },
+      params: { id: regularUser._id.toString() },
+    });
+
+    await promoteUser(req, res);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.jsonData.message).toMatch(/must become DJs/i);
+
+    const refreshed = await User.findById(regularUser._id);
+    expect(refreshed.role).toBe("user");
+  });
+});
+
 });

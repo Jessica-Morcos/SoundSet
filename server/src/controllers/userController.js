@@ -62,3 +62,30 @@ export const updatePreferences = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+export const promoteUser = async (req, res) => {
+  if (req.user.role !== "admin") return res.sendStatus(403);
+
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // ❌ Prevent regular users from jumping to admin
+    if (user.role === "user") {
+      return res.status(400).json({ message: "Users must become DJs before becoming admins" });
+    }
+
+    // 🔁 Toggle DJ ↔ Admin
+    user.role = user.role === "admin" ? "dj" : "admin";
+    await user.save();
+
+    res.json({
+      message: `User role updated to ${user.role}`,
+      user: { _id: user._id, username: user.username, role: user.role }
+    });
+
+  } catch (err) {
+    console.error("Error changing role:", err);
+    res.status(500).json({ message: "Failed to update role" });
+  }
+};

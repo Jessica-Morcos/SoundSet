@@ -5,6 +5,7 @@ import {
   deleteUser,
   getPreferences,
   updatePreferences,
+  promoteUser      // ✅ ADD THIS
 } from "../controllers/userController.js";
 import { authMiddleware, adminOnly } from "../middleware/auth.js";
 
@@ -13,6 +14,7 @@ const router = express.Router();
 // 🟢 Admin-only user management
 router.get("/", authMiddleware, adminOnly, listUsers);
 router.patch("/:id/toggle", authMiddleware, adminOnly, toggleUserActive);
+router.patch("/:id/role", authMiddleware, adminOnly, promoteUser);   // ✅ OK
 router.delete("/:id", authMiddleware, adminOnly, deleteUser);
 
 // 🟢 Regular users: view and update preferences
