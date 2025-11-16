@@ -1,3 +1,5 @@
+import { jest } from "@jest/globals";
+
 import request from "supertest";
 import app from "../test-utils/server.js";
 
@@ -119,4 +121,39 @@ describe("DJ Controller", () => {
     expect(res.status).toBe(404);
     expect(res.body.message).toBe("DJ not found");
   });
+
+  // MUST clear mocks, NOT reset modules
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
+test("saveDjProfile returns 500 on DB error", async () => {
+  // MUST mock BOTH findOne AND create
+  jest.spyOn(DjProfile, "findOne").mockRejectedValueOnce(new Error("DB FAIL"));
+
+  const res = await request(app)
+    .post("/api/dj")
+    .set("Authorization", `Bearer ${token}`)
+    .send({ displayName: "X" });
+
+  expect(res.status).toBe(500);
+  expect(res.body.message).toContain("DB FAIL");
+});
+
+test("getDjById returns 500 if Playlist query crashes", async () => {
+  const profile = await DjProfile.create({
+    user: user._id,
+    displayName: "CrashDJ",
+  });
+
+  jest.spyOn(Playlist, "find").mockRejectedValueOnce(new Error("PLAYLIST ERR"));
+
+  const res = await request(app)
+    .get(`/api/dj/${profile._id}`)
+    .set("Authorization", `Bearer ${token}`);
+
+  expect(res.status).toBe(500);
+  expect(res.body.message).toContain("PLAYLIST ERR");
+});
+
 });
