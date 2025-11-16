@@ -61,7 +61,7 @@ export default function Navbar() {
         {role === "admin" && (
           <>
             <Link to="/admin/songs" className={linkClasses("/admin/songs")}>
-              Admin Panel
+              Admin Songs
             </Link>
 
             <Link to="/admin/users" className={linkClasses("/admin/users")}>
