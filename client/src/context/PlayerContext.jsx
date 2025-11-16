@@ -6,6 +6,7 @@ export const PlayerContext = createContext();
 export default function PlayerProvider({ children }) {
   const audioRef = useRef(new Audio());
 
+  // core player state
   const [playlist, setPlaylist] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentSong, setCurrentSong] = useState(null);
@@ -14,6 +15,11 @@ export default function PlayerProvider({ children }) {
   const [duration, setDuration] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // 🔥 NEW: in-memory queue (NO persistence)
+  const [queue, setQueue] = useState([]);
+  const [isQueueOpen, setIsQueueOpen] = useState(false);
+
+  // progress tracking
   useEffect(() => {
     const audio = audioRef.current;
 
@@ -23,7 +29,7 @@ export default function PlayerProvider({ children }) {
 
       setDuration(dur);
 
-      setProgress(prev => {
+      setProgress((prev) => {
         if (Math.abs(prev - current) < 0.25) return prev;
         return current;
       });
@@ -38,25 +44,32 @@ export default function PlayerProvider({ children }) {
     };
   }, []);
 
+  // ▶ play a song (optionally within a playlist)
   const playSong = async (song, list = []) => {
     const audio = audioRef.current;
 
-    if (list.length) {
+    // if a playlist is passed, treat it as the active context
+    if (Array.isArray(list) && list.length) {
       setPlaylist(list);
-      const i = list.findIndex(s => s._id === song._id);
+      const i = list.findIndex((s) => s._id === song._id);
       setCurrentIndex(i >= 0 ? i : 0);
+
+      // whenever you start a brand-new playlist, wipe the old queue
+      setQueue([]);
     }
 
-    if (currentSong?._id !== song._id) {
+    if (!currentSong || currentSong._id !== song._id) {
       audio.src = song.audioUrl;
+      audio.currentTime = 0;
       setCurrentSong(song);
     }
 
     audio.play();
     setIsPlaying(true);
 
+    // log play for stats
     const token = localStorage.getItem("token");
-    if (token) {
+    if (token && song?._id) {
       try {
         await fetch(`${import.meta.env.VITE_API_BASE_URL}/stats/log`, {
           method: "POST",
@@ -84,23 +97,44 @@ export default function PlayerProvider({ children }) {
     setProgress(t);
   };
 
+  // 🔥 NEW: queue helpers
+  const addToQueue = (song) => {
+    if (!song || !song._id) return;
+    setQueue((prev) => [...prev, song]);
+  };
+
+  const removeFromQueue = (songId) => {
+    setQueue((prev) => prev.filter((s) => s._id !== songId));
+  };
+
+  const clearQueue = () => setQueue([]);
+
+  // ⏭ nextSong: queue first, then playlist
   const nextSong = () => {
+    // 1) if there is a queue, consume it first
+    if (queue.length > 0) {
+      const [next, ...rest] = queue;
+      setQueue(rest);
+      playSong(next); // do NOT touch playlist index
+      return;
+    }
+
+    // 2) otherwise fall back to playlist behaviour
     if (!playlist.length) return;
 
     const next = currentIndex + 1;
     const wrap = next >= playlist.length ? 0 : next;
 
     setCurrentIndex(wrap);
-    playSong(playlist[wrap]);
+    playSong(playlist[wrap], playlist);
   };
 
   const prevSong = () => {
     if (!playlist.length) return;
 
     const prev = currentIndex > 0 ? currentIndex - 1 : playlist.length - 1;
-
     setCurrentIndex(prev);
-    playSong(playlist[prev]);
+    playSong(playlist[prev], playlist);
   };
 
   const resetPlayer = () => {
@@ -114,11 +148,16 @@ export default function PlayerProvider({ children }) {
     setProgress(0);
     setDuration(0);
     setIsFullscreen(false);
+
+    // reset queue as well
+    setQueue([]);
+    setIsQueueOpen(false);
   };
 
   return (
     <PlayerContext.Provider
       value={{
+        // core state
         currentSong,
         playlist,
         currentIndex,
@@ -127,6 +166,16 @@ export default function PlayerProvider({ children }) {
         duration,
         isFullscreen,
         setIsFullscreen,
+
+        // queue state
+        queue,
+        addToQueue,
+        removeFromQueue,
+        clearQueue,
+        isQueueOpen,
+        setIsQueueOpen,
+
+        // controls
         playSong,
         togglePlay,
         seek,

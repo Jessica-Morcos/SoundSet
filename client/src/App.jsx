@@ -1,3 +1,4 @@
+// src/App.jsx
 import {
   BrowserRouter,
   Routes,
@@ -22,6 +23,7 @@ import PlayerBar from "./components/PlayerBar.jsx";
 import Discover from "./pages/Discover.jsx";
 import DiscoverProfile from "./pages/DiscoverProfile.jsx";
 import SongStatsSidebar from "./components/SongStatsSidebar.jsx";
+import QueueSidebar from "./components/QueueSidebar.jsx";
 
 function AppContent() {
   const location = useLocation();
@@ -33,7 +35,6 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1c0f2f] via-[#5b3a9b] to-[#9c7df5] text-white flex flex-col">
-      
       {!hideNavbar && <Navbar />}
 
       <AnimatePresence mode="wait">
@@ -71,11 +72,14 @@ function AppContent() {
 export default function App() {
   return (
     <BrowserRouter>
-      <SidebarProvider>     {/* FIXED — MUST BE OUTSIDE */}
+      {/* stats sidebar context */}
+      <SidebarProvider>
+        {/* player + queue context */}
         <PlayerProvider>
           <AppContent />
           <PlayerBar />
           <SongStatsSidebar />
+          <QueueSidebar />
         </PlayerProvider>
       </SidebarProvider>
     </BrowserRouter>

@@ -24,7 +24,8 @@ export default function PlaylistView() {
   const [yearFilter, setYearFilter] = useState("");
 
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const { playSong } = useContext(PlayerContext);
+  const { playSong, addToQueue } = useContext(PlayerContext);
+
 
   // Get user (role + id)
   useEffect(() => {
@@ -272,6 +273,7 @@ export default function PlaylistView() {
                   key={i}
                   className="flex justify-between items-center py-3 px-4 hover:bg-gray-100 rounded-lg transition"
                 >
+                  {/* LEFT SIDE: Song info */}
                   <div>
                     <p className="font-semibold text-gray-800">
                       {entry.song?.title || "Untitled Song"}
@@ -280,7 +282,10 @@ export default function PlaylistView() {
                       {entry.song?.artist || "Unknown Artist"}
                     </p>
                   </div>
+
+                  {/* RIGHT SIDE: Duration + Queue + Play */}
                   <div className="flex items-center gap-3">
+                    {/* Duration */}
                     <p className="text-sm text-gray-400">
                       {entry.song?.durationSec
                         ? `${Math.floor(entry.song.durationSec / 60)}:${String(
@@ -288,9 +293,22 @@ export default function PlaylistView() {
                           ).padStart(2, "0")}`
                         : ""}
                     </p>
+
+                    {/* ADD TO QUEUE */}
+                    <button
+                      onClick={() => addToQueue(entry.song)}
+                      className="px-3 py-2 bg-purple-500 hover:bg-purple-600 text-white text-sm rounded-lg transition"
+                    >
+                      ➕ Queue
+                    </button>
+
+                    {/* PLAY */}
                     <button
                       onClick={() =>
-                        playSong(entry.song, playlist.songs.map((s) => s.song))
+                        playSong(
+                          entry.song,
+                          playlist.songs.map((s) => s.song)
+                        )
                       }
                       className="px-3 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition"
                     >
@@ -300,6 +318,7 @@ export default function PlaylistView() {
                 </li>
               ))}
             </ul>
+
           </>
         ) : (
           /* EDIT MODE */

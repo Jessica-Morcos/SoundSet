@@ -1,7 +1,8 @@
+// src/components/PlayerBar.jsx
 import { useContext } from "react";
 import { PlayerContext } from "../context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, SkipBack, SkipForward, X, BarChart3 } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, X, ListMusic } from "lucide-react";
 
 export default function PlayerBar() {
   const {
@@ -11,13 +12,12 @@ export default function PlayerBar() {
     progress,
     duration,
     seek,
-    skip,
     isFullscreen,
     setIsFullscreen,
     nextSong,
     prevSong,
-    isStatsOpen,
-    setIsStatsOpen,
+    isQueueOpen,
+    setIsQueueOpen,
   } = useContext(PlayerContext);
 
   if (!currentSong) return null;
@@ -33,7 +33,6 @@ export default function PlayerBar() {
     return `${minutes}:${seconds}`;
   };
 
-
   return (
     <AnimatePresence>
       {/* ─────────── Mini Player (bottom bar) ─────────── */}
@@ -42,7 +41,7 @@ export default function PlayerBar() {
           initial={{ y: 100 }}
           animate={{ y: 0 }}
           exit={{ y: 100 }}
-          className="fixed bottom-0 left-0 right-0 bg-indigo-700 text-white p-3 shadow-2xl flex items-center justify-between cursor-pointer z-80"
+          className="fixed bottom-0 left-0 right-0 bg-indigo-700 text-white p-3 shadow-2xl flex items-center justify-between cursor-pointer z-[80]"
           onClick={() => setIsFullscreen(true)}
         >
           {/* Song Info */}
@@ -92,7 +91,21 @@ export default function PlayerBar() {
               <SkipForward size={22} />
             </button>
 
-            
+            {/* 🔥 Queue toggle */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsQueueOpen((prev) => !prev);
+              }}
+              className={`ml-2 rounded-full p-2 transition-colors ${
+                isQueueOpen
+                  ? "bg-purple-600 text-white"
+                  : "text-gray-200 hover:text-white hover:bg-purple-600/40"
+              }`}
+              title="Show queue"
+            >
+              <ListMusic size={20} />
+            </button>
           </div>
 
           {/* Progress bar */}
@@ -111,7 +124,7 @@ export default function PlayerBar() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-gradient-to-br from-indigo-900 via-purple-800 to-indigo-700 flex flex-col items-center justify-center text-white z-50"
+          className="fixed inset-0 bg-gradient-to-br from-indigo-900 via-purple-800 to-indigo-700 flex flex-col items-center justify-center text-white z-[80]"
         >
           {/* Cover */}
           {currentSong.coverUrl && (
@@ -164,7 +177,18 @@ export default function PlayerBar() {
             </button>
           </div>
 
-        
+          {/* Queue toggle in fullscreen as well */}
+          <button
+            onClick={() => setIsQueueOpen((prev) => !prev)}
+            className={`absolute bottom-10 right-10 rounded-full p-3 transition-colors ${
+              isQueueOpen
+                ? "bg-purple-600 text-white"
+                : "bg-purple-900/60 text-gray-200 hover:bg-purple-700"
+            }`}
+            title="Show queue"
+          >
+            <ListMusic size={22} />
+          </button>
 
           {/* Close */}
           <button
