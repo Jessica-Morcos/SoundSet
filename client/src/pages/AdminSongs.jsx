@@ -12,7 +12,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export default function AdminSongs() {
   const [songs, setSongs] = useState([]);
   const [filtered, setFiltered] = useState([]);
-  const [editingSong, setEditingSong] = useState(null); // 👈 for edit modal
+  const [editingSong, setEditingSong] = useState(null);
   const [uploading, setUploading] = useState(false);
 
   const [newSong, setNewSong] = useState({
@@ -54,11 +54,6 @@ export default function AdminSongs() {
     setFiltered(result);
   }, [filters, songs]);
 
-  const uniqueGenres = [...new Set(songs.map((s) => s.genre).filter(Boolean))];
-  const uniqueArtists = [...new Set(songs.map((s) => s.artist).filter(Boolean))];
-  const uniqueYears = [...new Set(songs.map((s) => s.year).filter(Boolean))];
-
-  // ✅ Upload helper
   const handleFileUpload = async (file, type) => {
     const token = localStorage.getItem("token");
     const formData = new FormData();
@@ -80,7 +75,6 @@ export default function AdminSongs() {
     }
   };
 
-  // ✅ Add Song
   const handleAddSong = async () => {
     const token = localStorage.getItem("token");
     if (!newSong.title.trim() || !newSong.audioUrl) {
@@ -103,7 +97,6 @@ export default function AdminSongs() {
     } else alert("❌ Failed to add song");
   };
 
-  // ✅ Update Song
   const handleUpdate = async (song) => {
     const token = localStorage.getItem("token");
     const res = await updateSong(song._id, song, token);
@@ -113,7 +106,7 @@ export default function AdminSongs() {
       );
       setEditingSong(null);
       alert("✅ Song updated!");
-    } else alert("❌ Failed to update song");
+    }
   };
 
   const handleDelete = async (id) => {
@@ -138,7 +131,7 @@ export default function AdminSongs() {
 
   return (
     <div className="min-h-screen text-white py-10 px-6 flex flex-col items-center pb-[10rem]">
-      <h1 className="text-4xl font-extrabold mb-6">Admin Song Management </h1>
+      <h1 className="text-4xl font-extrabold mb-6">Admin Song Management</h1>
 
       {/* Filters */}
       <div className="flex flex-wrap justify-center gap-3 mb-6">
@@ -170,6 +163,7 @@ export default function AdminSongs() {
           <option value="false">Unrestricted</option>
           <option value="true">Restricted</option>
         </select>
+
         <button
           onClick={() =>
             setFilters({ genre: "", artist: "", year: "", restricted: "" })
@@ -180,11 +174,12 @@ export default function AdminSongs() {
         </button>
       </div>
 
-      {/* Add Song Form */}
+      {/* Add Song */}
       <div className="bg-white text-gray-800 rounded-xl p-6 shadow-lg w-full max-w-3xl mb-8">
         <h2 className="text-xl font-semibold mb-3 text-indigo-600">
           Add New Song
         </h2>
+
         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
           {["title", "artist", "genre", "year", "durationSec"].map((field) => (
             <input
@@ -205,10 +200,8 @@ export default function AdminSongs() {
 
         {/* Uploads */}
         <div className="mt-4 flex flex-col sm:flex-row gap-4">
-          <div className="flex flex-col">
-            <label className="text-sm font-semibold text-gray-600">
-              Upload Audio
-            </label>
+          <div>
+            <label className="text-sm font-semibold">Upload Audio</label>
             <input
               type="file"
               accept="audio/*"
@@ -219,17 +212,11 @@ export default function AdminSongs() {
                   setNewSong({ ...newSong, audioUrl: url });
                 }
               }}
-              className="text-sm"
             />
-            {newSong.audioUrl && (
-              <audio controls src={newSong.audioUrl} className="mt-2 w-full" />
-            )}
           </div>
 
-          <div className="flex flex-col">
-            <label className="text-sm font-semibold text-gray-600">
-              Upload Cover
-            </label>
+          <div>
+            <label className="text-sm font-semibold">Upload Cover</label>
             <input
               type="file"
               accept="image/*"
@@ -240,15 +227,7 @@ export default function AdminSongs() {
                   setNewSong({ ...newSong, coverUrl: url });
                 }
               }}
-              className="text-sm"
             />
-            {newSong.coverUrl && (
-              <img
-                src={newSong.coverUrl}
-                alt="cover preview"
-                className="mt-2 w-30 h-30 object-cover rounded-lg"
-              />
-            )}
           </div>
         </div>
 
@@ -257,7 +236,7 @@ export default function AdminSongs() {
           disabled={uploading}
           className={`mt-6 px-5 py-2 rounded-lg text-white font-semibold ${
             uploading
-              ? "bg-gray-400 cursor-not-allowed"
+              ? "bg-gray-400"
               : "bg-indigo-600 hover:bg-indigo-700"
           }`}
         >
@@ -265,7 +244,7 @@ export default function AdminSongs() {
         </button>
       </div>
 
-      {/* Songs Table */}
+      {/* SONG TABLE */}
       <div className="w-full max-w-6xl overflow-x-auto">
         <table className="w-full bg-white text-gray-800 rounded-xl shadow-lg overflow-hidden">
           <thead className="bg-indigo-600 text-white">
@@ -279,21 +258,14 @@ export default function AdminSongs() {
               <th className="p-3 text-center">Actions</th>
             </tr>
           </thead>
+
           <tbody>
             {filtered.map((song) => (
-              <tr
-                key={song._id}
-                className={`border-b ${
-                  song.restricted
-                    ? "bg-red-100 hover:bg-red-200"
-                    : "hover:bg-gray-100"
-                }`}
-              >
+              <tr key={song._id} className="border-b hover:bg-gray-100">
                 <td className="p-3">
                   {song.coverUrl && (
                     <img
                       src={song.coverUrl}
-                      alt="cover"
                       className="w-16 h-16 rounded-md object-cover"
                     />
                   )}
@@ -302,28 +274,36 @@ export default function AdminSongs() {
                 <td className="p-3">{song.artist}</td>
                 <td className="p-3">{song.genre}</td>
                 <td className="p-3">{song.year}</td>
+
                 <td className="p-3 text-center">
                   {song.restricted ? "🔒" : "✅"}
                 </td>
-                <td className="p-3 text-center space-x-2">
-                  <button
-                    onClick={() => handleToggleRestricted(song._id)}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-                  >
-                    {song.restricted ? "Unlock" : "Lock"}
-                  </button>
-                  <button
-                    onClick={() => setEditingSong(song)} // 👈 open edit modal
-                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
-                  >
-                    ✏️ Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(song._id)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                  >
-                    🗑️
-                  </button>
+
+                {/* ⭐⭐ FIXED ACTION BUTTONS ⭐⭐ */}
+                <td className="p-3">
+                  <div className="flex flex-wrap gap-2 justify-center">
+
+                    <button
+                      onClick={() => handleToggleRestricted(song._id)}
+                      className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded"
+                    >
+                      {song.restricted ? "Unlock" : "Lock"}
+                    </button>
+
+                    <button
+                      onClick={() => setEditingSong(song)}
+                      className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded"
+                    >
+                      ✏️ Edit
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(song._id)}
+                      className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded"
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -331,7 +311,7 @@ export default function AdminSongs() {
         </table>
       </div>
 
-      {/* ✏️ Edit Song Modal */}
+      {/* ✏️ EDIT MODAL */}
       {editingSong && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
           <div className="bg-white text-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-md">
@@ -344,7 +324,6 @@ export default function AdminSongs() {
                 (field) => (
                   <input
                     key={field}
-                    placeholder={field}
                     value={editingSong[field] || ""}
                     onChange={(e) =>
                       setEditingSong({
@@ -359,48 +338,6 @@ export default function AdminSongs() {
                   />
                 )
               )}
-
-              <label className="text-sm font-semibold text-gray-600">
-                Classification
-              </label>
-              <select
-                value={editingSong.classification || "general"}
-                onChange={(e) =>
-                  setEditingSong({
-                    ...editingSong,
-                    classification: e.target.value,
-                  })
-                }
-                className="p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
-              >
-                {[
-                  "general",
-                  "wedding",
-                  "corporate",
-                  "birthday",
-                  "club",
-                  "charity",
-                  "custom",
-                ].map((c) => (
-                  <option key={c} value={c}>
-                    {c.charAt(0).toUpperCase() + c.slice(1)}
-                  </option>
-                ))}
-              </select>
-
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={editingSong.restricted || false}
-                  onChange={(e) =>
-                    setEditingSong({
-                      ...editingSong,
-                      restricted: e.target.checked,
-                    })
-                  }
-                />
-                Restricted
-              </label>
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
