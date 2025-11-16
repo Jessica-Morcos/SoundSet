@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import { PlayerContext } from "../context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, SkipBack, SkipForward, X } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, X, BarChart3 } from "lucide-react";
 
 export default function PlayerBar() {
   const {
@@ -16,6 +16,8 @@ export default function PlayerBar() {
     setIsFullscreen,
     nextSong,
     prevSong,
+    isStatsOpen,
+    setIsStatsOpen,
   } = useContext(PlayerContext);
 
   if (!currentSong) return null;
@@ -31,6 +33,7 @@ export default function PlayerBar() {
     return `${minutes}:${seconds}`;
   };
 
+
   return (
     <AnimatePresence>
       {/* ─────────── Mini Player (bottom bar) ─────────── */}
@@ -39,7 +42,7 @@ export default function PlayerBar() {
           initial={{ y: 100 }}
           animate={{ y: 0 }}
           exit={{ y: 100 }}
-          className="fixed bottom-0 left-0 right-0 bg-indigo-700 text-white p-3 shadow-2xl flex items-center justify-between cursor-pointer"
+          className="fixed bottom-0 left-0 right-0 bg-indigo-700 text-white p-3 shadow-2xl flex items-center justify-between cursor-pointer z-80"
           onClick={() => setIsFullscreen(true)}
         >
           {/* Song Info */}
@@ -88,6 +91,8 @@ export default function PlayerBar() {
             >
               <SkipForward size={22} />
             </button>
+
+            
           </div>
 
           {/* Progress bar */}
@@ -158,6 +163,8 @@ export default function PlayerBar() {
               <SkipForward size={28} />
             </button>
           </div>
+
+        
 
           {/* Close */}
           <button

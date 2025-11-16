@@ -5,6 +5,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
@@ -15,12 +16,12 @@ import Stats from "./pages/Stats.jsx";
 import Suggest from "./pages/Suggest.jsx";
 import AdminSongs from "./pages/AdminSongs.jsx";
 import AdminUsers from "./pages/AdminUsers.jsx";
-import PlayerProvider from "./context/PlayerContext";
+import PlayerProvider from "./context/PlayerContext.jsx";
+import SidebarProvider from "./context/SidebarContext.jsx";
 import PlayerBar from "./components/PlayerBar.jsx";
 import Discover from "./pages/Discover.jsx";
 import DiscoverProfile from "./pages/DiscoverProfile.jsx";
-
-
+import SongStatsSidebar from "./components/SongStatsSidebar.jsx";
 
 function AppContent() {
   const location = useLocation();
@@ -31,11 +32,10 @@ function AppContent() {
     location.pathname === "/register";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1c0f2f] via-[#5b3a9b] to-[#9c7df5] text-white flex flex-col transition-colors duration-300">
-      {/* ✅ Navbar persists only where needed */}
+    <div className="min-h-screen bg-gradient-to-br from-[#1c0f2f] via-[#5b3a9b] to-[#9c7df5] text-white flex flex-col">
+      
       {!hideNavbar && <Navbar />}
 
-      {/* ✅ Page transitions with AnimatePresence */}
       <AnimatePresence mode="wait">
         <motion.div
           key={location.pathname}
@@ -45,19 +45,17 @@ function AppContent() {
           transition={{ duration: 0.25, ease: "easeInOut" }}
           className="flex-1"
         >
-          <Routes location={location} key={location.pathname}>
+          <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/login" element={<Login />} />
-         
             <Route path="/register" element={<Register />} />
 
-            {/* 🔐 Admin Routes */}
             <Route path="/admin/songs" element={<AdminSongs />} />
             <Route path="/admin/users" element={<AdminUsers />} />
 
-          <Route path="/discover" element={<Discover />} />
-          <Route path="/discover/:id" element={<DiscoverProfile />} />
-            {/* 🎵 User Routes */}
+            <Route path="/discover" element={<Discover />} />
+            <Route path="/discover/:id" element={<DiscoverProfile />} />
+
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/suggest" element={<Suggest />} />
             <Route path="/playlist/:id" element={<PlaylistView />} />
@@ -73,10 +71,13 @@ function AppContent() {
 export default function App() {
   return (
     <BrowserRouter>
-      <PlayerProvider>
-        <AppContent />
-        <PlayerBar />
-      </PlayerProvider>
+      <SidebarProvider>     {/* FIXED — MUST BE OUTSIDE */}
+        <PlayerProvider>
+          <AppContent />
+          <PlayerBar />
+          <SongStatsSidebar />
+        </PlayerProvider>
+      </SidebarProvider>
     </BrowserRouter>
   );
 }

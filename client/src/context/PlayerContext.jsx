@@ -1,3 +1,4 @@
+// src/context/PlayerContext.jsx
 import { createContext, useState, useRef, useEffect } from "react";
 
 export const PlayerContext = createContext();
@@ -13,37 +14,37 @@ export default function PlayerProvider({ children }) {
   const [duration, setDuration] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // 🔄 Track progress
   useEffect(() => {
     const audio = audioRef.current;
+
     const updateProgress = () => {
-      setProgress(audio.currentTime);
-      setDuration(audio.duration || 0);
+      const current = audio.currentTime || 0;
+      const dur = audio.duration || 0;
+
+      setDuration(dur);
+
+      setProgress(prev => {
+        if (Math.abs(prev - current) < 0.25) return prev;
+        return current;
+      });
     };
+
     audio.addEventListener("timeupdate", updateProgress);
     audio.addEventListener("loadedmetadata", updateProgress);
+
     return () => {
       audio.removeEventListener("timeupdate", updateProgress);
       audio.removeEventListener("loadedmetadata", updateProgress);
     };
   }, []);
 
-  // 🔁 Auto-next on end
-  useEffect(() => {
-    const audio = audioRef.current;
-    const handleEnded = () => nextSong();
-    audio.addEventListener("ended", handleEnded);
-    return () => audio.removeEventListener("ended", handleEnded);
-  }, [playlist, currentIndex]);
-
-  // ▶ Play a song
   const playSong = async (song, list = []) => {
     const audio = audioRef.current;
 
     if (list.length) {
       setPlaylist(list);
-      const index = list.findIndex((s) => s._id === song._id);
-      setCurrentIndex(index >= 0 ? index : 0);
+      const i = list.findIndex(s => s._id === song._id);
+      setCurrentIndex(i >= 0 ? i : 0);
     }
 
     if (currentSong?._id !== song._id) {
@@ -54,9 +55,8 @@ export default function PlayerProvider({ children }) {
     audio.play();
     setIsPlaying(true);
 
-    // 🧠 Log play
     const token = localStorage.getItem("token");
-    if (token && song._id) {
+    if (token) {
       try {
         await fetch(`${import.meta.env.VITE_API_BASE_URL}/stats/log`, {
           method: "POST",
@@ -79,68 +79,63 @@ export default function PlayerProvider({ children }) {
     setIsPlaying(!isPlaying);
   };
 
-  const seek = (time) => {
-    audioRef.current.currentTime = time;
-    setProgress(time);
+  const seek = (t) => {
+    audioRef.current.currentTime = t;
+    setProgress(t);
   };
 
-  const skip = (seconds) => {
-    const audio = audioRef.current;
-    audio.currentTime = Math.min(audio.duration, Math.max(0, audio.currentTime + seconds));
-  };
-
-  // ⏭ Next / ⏮ Previous
   const nextSong = () => {
     if (!playlist.length) return;
+
     const next = currentIndex + 1;
-    if (next < playlist.length) {
-      setCurrentIndex(next);
-      playSong(playlist[next]);
-    } else {
-      setCurrentIndex(0);
-      playSong(playlist[0]);
-    }
+    const wrap = next >= playlist.length ? 0 : next;
+
+    setCurrentIndex(wrap);
+    playSong(playlist[wrap]);
   };
 
   const prevSong = () => {
     if (!playlist.length) return;
+
     const prev = currentIndex > 0 ? currentIndex - 1 : playlist.length - 1;
+
     setCurrentIndex(prev);
     playSong(playlist[prev]);
   };
 
-  // 🧹 CLEAR PLAYER WHEN LOGGING OUT
   const resetPlayer = () => {
     const audio = audioRef.current;
     audio.pause();
-    audio.src = "";        // removes loaded audio
+    audio.src = "";
 
     setPlaylist([]);
     setCurrentSong(null);
-    setCurrentIndex(0);
     setIsPlaying(false);
     setProgress(0);
     setDuration(0);
     setIsFullscreen(false);
   };
 
-  const value = {
-    currentSong,
-    isPlaying,
-    progress,
-    duration,
-    isFullscreen,
-    setIsFullscreen,
-
-    playSong,
-    togglePlay,
-    seek,
-    skip,
-    nextSong,
-    prevSong,
-
-    resetPlayer,   // 👈 EXPORT IT
-  };
-
-  return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
+  return (
+    <PlayerContext.Provider
+      value={{
+        currentSong,
+        playlist,
+        currentIndex,
+        isPlaying,
+        progress,
+        duration,
+        isFullscreen,
+        setIsFullscreen,
+        playSong,
+        togglePlay,
+        seek,
+        nextSong,
+        prevSong,
+        resetPlayer,
+      }}
+    >
+      {children}
+    </PlayerContext.Provider>
+  );
 }
