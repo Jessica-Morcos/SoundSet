@@ -70,13 +70,21 @@ export const promoteUser = async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // ❌ Prevent regular users from jumping to admin
-    if (user.role === "user") {
-      return res.status(400).json({ message: "Users must become DJs before becoming admins" });
+    // 🚫 Prevent removing the last admin
+    const adminCount = await User.countDocuments({ role: "admin" });
+    if (user.role === "admin" && adminCount === 1) {
+      return res.status(400).json({ message: "Cannot remove the last admin" });
     }
 
-    // 🔁 Toggle DJ ↔ Admin
-    user.role = user.role === "admin" ? "dj" : "admin";
+    // 🔁 3-way role cycle
+    if (user.role === "user") {
+      user.role = "dj";       // promote user → DJ
+    } else if (user.role === "dj") {
+      user.role = "admin";    // promote DJ → Admin
+    } else {
+      user.role = "dj";       // demote Admin → DJ
+    }
+
     await user.save();
 
     res.json({
@@ -89,3 +97,4 @@ export const promoteUser = async (req, res) => {
     res.status(500).json({ message: "Failed to update role" });
   }
 };
+

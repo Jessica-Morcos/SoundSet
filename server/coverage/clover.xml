@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1763252074440" clover="3.2.0">
-  <project timestamp="1763252074440" name="All files">
-    <metrics statements="474" coveredstatements="440" conditionals="201" coveredconditionals="176" methods="68" coveredmethods="64" elements="743" coveredelements="680" complexity="0" loc="474" ncloc="474" packages="6" files="21" classes="21"/>
+<coverage generated="1763254284544" clover="3.2.0">
+  <project timestamp="1763254284544" name="All files">
+    <metrics statements="479" coveredstatements="444" conditionals="205" coveredconditionals="179" methods="68" coveredmethods="64" elements="752" coveredelements="687" complexity="0" loc="479" ncloc="479" packages="6" files="21" classes="21"/>
     <package name="src">
       <metrics statements="13" coveredstatements="13" conditionals="2" coveredconditionals="2" methods="3" coveredmethods="3"/>
       <file name="test-db.js" path="/Users/jessicamorcos/Desktop/Git_projects/Soundset/server/src/test-db.js">
@@ -22,7 +22,7 @@
       </file>
     </package>
     <package name="src.controllers">
-      <metrics statements="286" coveredstatements="254" conditionals="146" coveredconditionals="130" methods="42" coveredmethods="38"/>
+      <metrics statements="291" coveredstatements="258" conditionals="150" coveredconditionals="133" methods="42" coveredmethods="38"/>
       <file name="authController.js" path="/Users/jessicamorcos/Desktop/Git_projects/Soundset/server/src/controllers/authController.js">
         <metrics statements="25" coveredstatements="20" conditionals="8" coveredconditionals="8" methods="3" coveredmethods="2"/>
         <line num="5" count="12" type="stmt"/>
@@ -281,7 +281,7 @@
         <line num="129" count="1" type="stmt"/>
       </file>
       <file name="userController.js" path="/Users/jessicamorcos/Desktop/Git_projects/Soundset/server/src/controllers/userController.js">
-        <metrics statements="44" coveredstatements="42" conditionals="32" coveredconditionals="30" methods="6" coveredmethods="6"/>
+        <metrics statements="49" coveredstatements="46" conditionals="36" coveredconditionals="33" methods="6" coveredmethods="6"/>
         <line num="3" count="12" type="stmt"/>
         <line num="4" count="2" type="cond" truecount="2" falsecount="0"/>
         <line num="5" count="1" type="stmt"/>
@@ -315,17 +315,22 @@
         <line num="57" count="2" type="stmt"/>
         <line num="62" count="1" type="stmt"/>
         <line num="66" count="12" type="stmt"/>
-        <line num="67" count="5" type="cond" truecount="2" falsecount="0"/>
-        <line num="69" count="4" type="stmt"/>
-        <line num="70" count="4" type="stmt"/>
-        <line num="71" count="4" type="cond" truecount="2" falsecount="0"/>
-        <line num="74" count="3" type="cond" truecount="2" falsecount="0"/>
-        <line num="75" count="1" type="stmt"/>
-        <line num="79" count="2" type="cond" truecount="2" falsecount="0"/>
-        <line num="80" count="2" type="stmt"/>
-        <line num="82" count="2" type="stmt"/>
-        <line num="88" count="0" type="stmt"/>
-        <line num="89" count="0" type="stmt"/>
+        <line num="67" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="69" count="7" type="stmt"/>
+        <line num="70" count="7" type="stmt"/>
+        <line num="71" count="7" type="cond" truecount="2" falsecount="0"/>
+        <line num="74" count="6" type="stmt"/>
+        <line num="75" count="6" type="cond" truecount="3" falsecount="1"/>
+        <line num="76" count="0" type="stmt"/>
+        <line num="80" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="81" count="2" type="stmt"/>
+        <line num="82" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="83" count="2" type="stmt"/>
+        <line num="85" count="2" type="stmt"/>
+        <line num="88" count="6" type="stmt"/>
+        <line num="90" count="6" type="stmt"/>
+        <line num="96" count="0" type="stmt"/>
+        <line num="97" count="0" type="stmt"/>
       </file>
     </package>
     <package name="src.middleware">

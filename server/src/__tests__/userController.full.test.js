@@ -273,83 +273,121 @@ describe("👤 USER CONTROLLER — FULL COVERAGE", () => {
 
     User.findById = original;
   });
-  // ---------------- promoteUser (NEW FEATURE) ----------------
-describe("🔼 promoteUser — ROLE TOGGLING", () => {
-  test("returns 403 if non-admin calls promoteUser", async () => {
-    const { req, res } = makeReqRes({
-      user: { role: "user" },
-      params: { id: regularUser._id.toString() },
+  // ---------------- promoteUser — FULL ROLE CYCLING TESTS ----------------
+  describe("🔼 promoteUser — ROLE TOGGLING", () => {
+    test("returns 403 if non-admin calls promoteUser", async () => {
+      const { req, res } = makeReqRes({
+        user: { role: "user" },
+        params: { id: regularUser._id.toString() },
+      });
+
+      await promoteUser(req, res);
+      expect(res.statusCode).toBe(403);
     });
 
-    await promoteUser(req, res);
-    expect(res.statusCode).toBe(403);
+    test("returns 404 if target user does not exist", async () => {
+      const fakeId = new mongoose.Types.ObjectId().toString();
+      const { req, res } = makeReqRes({
+        user: { role: "admin" },
+        params: { id: fakeId },
+      });
+
+      await promoteUser(req, res);
+      expect(res.statusCode).toBe(404);
+      expect(res.jsonData.message).toBe("User not found");
+    });
+
+    test("USER → becomes DJ (first promotion)", async () => {
+      const newUser = await User.create({
+        username: "cycleUser",
+        passwordHash: "x",
+        role: "user",
+      });
+
+      const { req, res } = makeReqRes({
+        user: { role: "admin" },
+        params: { id: newUser._id.toString() },
+      });
+
+      await promoteUser(req, res);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.jsonData.user.role).toBe("dj");
+
+      const refreshed = await User.findById(newUser._id);
+      expect(refreshed.role).toBe("dj");
+    });
+
+    test("DJ → becomes ADMIN", async () => {
+      const dj = await User.create({
+        username: "djtester",
+        passwordHash: "x",
+        role: "dj",
+      });
+
+      const { req, res } = makeReqRes({
+        user: { role: "admin" },
+        params: { id: dj._id.toString() },
+      });
+
+      await promoteUser(req, res);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.jsonData.user.role).toBe("admin");
+
+      const refreshed = await User.findById(dj._id);
+      expect(refreshed.role).toBe("admin");
+    });
+
+    test("ADMIN → becomes DJ on next toggle", async () => {
+      const adminUser = await User.create({
+        username: "adminDJ",
+        passwordHash: "x",
+        role: "admin",
+      });
+
+      const { req, res } = makeReqRes({
+        user: { role: "admin" },
+        params: { id: adminUser._id.toString() },
+      });
+
+      await promoteUser(req, res);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.jsonData.user.role).toBe("dj");
+
+      const refreshed = await User.findById(adminUser._id);
+      expect(refreshed.role).toBe("dj");
+    });
+
+    test("FULL CYCLE: USER → DJ → ADMIN → DJ", async () => {
+      const u = await User.create({
+        username: "fullcycle",
+        passwordHash: "x",
+        role: "user",
+      });
+
+      const { req, res } = makeReqRes({
+        user: { role: "admin" },
+        params: { id: u._id.toString() },
+      });
+
+      // 1️⃣ USER → DJ
+      await promoteUser(req, res);
+      expect(res.jsonData.user.role).toBe("dj");
+
+      // 2️⃣ DJ → ADMIN
+      await promoteUser(req, res);
+      expect(res.jsonData.user.role).toBe("admin");
+
+      // 3️⃣ ADMIN → DJ
+      await promoteUser(req, res);
+      expect(res.jsonData.user.role).toBe("dj");
+
+      const refreshed = await User.findById(u._id);
+      expect(refreshed.role).toBe("dj");
+    });
   });
 
-  test("returns 404 if target user does not exist", async () => {
-    const fakeId = new mongoose.Types.ObjectId().toString();
-    const { req, res } = makeReqRes({
-      user: { role: "admin" },
-      params: { id: fakeId },
-    });
-
-    await promoteUser(req, res);
-    expect(res.statusCode).toBe(404);
-    expect(res.jsonData.message).toBe("User not found");
-  });
-
-  test("DJ → becomes ADMIN", async () => {
-    const dj = await User.create({
-      username: "djtester",
-      passwordHash: "x",
-      role: "dj",
-    });
-
-    const { req, res } = makeReqRes({
-      user: { role: "admin" },
-      params: { id: dj._id.toString() },
-    });
-
-    await promoteUser(req, res);
-
-    expect(res.statusCode).toBe(200);
-    expect(res.jsonData.user.role).toBe("admin");
-
-    const refreshed = await User.findById(dj._id);
-    expect(refreshed.role).toBe("admin");
-  });
-
-  test("ADMIN → becomes DJ on second toggle", async () => {
-    const djAdmin = await User.create({
-      username: "adminDJ",
-      passwordHash: "x",
-      role: "admin",
-    });
-
-    const { req, res } = makeReqRes({
-      user: { role: "admin" },
-      params: { id: djAdmin._id.toString() },
-    });
-
-    await promoteUser(req, res);
-
-    expect(res.statusCode).toBe(200);
-    expect(res.jsonData.user.role).toBe("dj");
-  });
-
-  test("❌ User cannot become Admin directly", async () => {
-    const { req, res } = makeReqRes({
-      user: { role: "admin" },
-      params: { id: regularUser._id.toString() },
-    });
-
-    await promoteUser(req, res);
-
-    expect(res.statusCode).toBe(400);
-    expect(res.jsonData.message).toMatch(/must become DJs/i);
-
-    const refreshed = await User.findById(regularUser._id);
-    expect(refreshed.role).toBe("user");
-  });
-});
 
 });
