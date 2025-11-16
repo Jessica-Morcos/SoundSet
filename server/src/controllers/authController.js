@@ -47,6 +47,11 @@ export const loginUser = async (req, res) => {
 
 
 export const getCurrentUser = async (req, res) => {
-  const user = await User.findById(req.user._id).select("-passwordHash");
-  res.json(user);
+  try {
+    const user = await User.findById(req.user._id).select("-passwordHash");
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
+
