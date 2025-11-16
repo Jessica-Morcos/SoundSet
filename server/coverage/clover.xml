@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1763317325218" clover="3.2.0">
-  <project timestamp="1763317325218" name="All files">
-    <metrics statements="479" coveredstatements="452" conditionals="205" coveredconditionals="180" methods="68" coveredmethods="65" elements="752" coveredelements="697" complexity="0" loc="479" ncloc="479" packages="6" files="21" classes="21"/>
+<coverage generated="1763318691006" clover="3.2.0">
+  <project timestamp="1763318691006" name="All files">
+    <metrics statements="499" coveredstatements="455" conditionals="207" coveredconditionals="180" methods="71" coveredmethods="65" elements="777" coveredelements="700" complexity="0" loc="499" ncloc="499" packages="6" files="21" classes="21"/>
     <package name="src">
       <metrics statements="13" coveredstatements="13" conditionals="2" coveredconditionals="2" methods="3" coveredmethods="3"/>
       <file name="test-db.js" path="/Users/jessicamorcos/Desktop/Git_projects/Soundset/server/src/test-db.js">
@@ -387,7 +387,7 @@
       </file>
     </package>
     <package name="src.routes">
-      <metrics statements="135" coveredstatements="133" conditionals="42" coveredconditionals="35" methods="18" coveredmethods="18"/>
+      <metrics statements="155" coveredstatements="136" conditionals="44" coveredconditionals="35" methods="21" coveredmethods="18"/>
       <file name="authRoutes.js" path="/Users/jessicamorcos/Desktop/Git_projects/Soundset/server/src/routes/authRoutes.js">
         <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
         <line num="5" count="12" type="stmt"/>
@@ -488,29 +488,49 @@
         <line num="23" count="11" type="stmt"/>
       </file>
       <file name="statsRoutes.js" path="/Users/jessicamorcos/Desktop/Git_projects/Soundset/server/src/routes/statsRoutes.js">
-        <metrics statements="22" coveredstatements="20" conditionals="2" coveredconditionals="2" methods="4" coveredmethods="4"/>
+        <metrics statements="42" coveredstatements="23" conditionals="4" coveredconditionals="2" methods="7" coveredmethods="4"/>
         <line num="5" count="11" type="stmt"/>
-        <line num="7" count="11" type="stmt"/>
-        <line num="8" count="4" type="stmt"/>
-        <line num="9" count="4" type="stmt"/>
+        <line num="11" count="11" type="stmt"/>
         <line num="12" count="4" type="stmt"/>
-        <line num="13" count="2" type="cond" truecount="2" falsecount="0"/>
-        <line num="15" count="1" type="stmt"/>
-        <line num="20" count="1" type="stmt"/>
-        <line num="22" count="2" type="stmt"/>
-        <line num="23" count="2" type="stmt"/>
-        <line num="28" count="11" type="stmt"/>
-        <line num="29" count="1" type="stmt"/>
-        <line num="30" count="1" type="stmt"/>
-        <line num="59" count="1" type="stmt"/>
-        <line num="61" count="0" type="stmt"/>
+        <line num="13" count="4" type="stmt"/>
+        <line num="15" count="4" type="stmt"/>
+        <line num="16" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="18" count="1" type="stmt"/>
+        <line num="23" count="1" type="stmt"/>
+        <line num="25" count="2" type="stmt"/>
+        <line num="26" count="2" type="stmt"/>
+        <line num="30" count="11" type="stmt"/>
+        <line num="31" count="1" type="stmt"/>
+        <line num="32" count="1" type="stmt"/>
+        <line num="60" count="1" type="stmt"/>
         <line num="62" count="0" type="stmt"/>
-        <line num="68" count="11" type="stmt"/>
-        <line num="69" count="2" type="stmt"/>
-        <line num="88" count="1" type="stmt"/>
-        <line num="92" count="11" type="stmt"/>
-        <line num="93" count="2" type="stmt"/>
-        <line num="112" count="1" type="stmt"/>
+        <line num="63" count="0" type="stmt"/>
+        <line num="67" count="11" type="stmt"/>
+        <line num="68" count="2" type="stmt"/>
+        <line num="87" count="1" type="stmt"/>
+        <line num="90" count="11" type="stmt"/>
+        <line num="91" count="2" type="stmt"/>
+        <line num="110" count="1" type="stmt"/>
+        <line num="116" count="11" type="stmt"/>
+        <line num="117" count="0" type="stmt"/>
+        <line num="118" count="0" type="stmt"/>
+        <line num="120" count="0" type="stmt"/>
+        <line num="142" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="144" count="0" type="stmt"/>
+        <line num="145" count="0" type="stmt"/>
+        <line num="152" count="11" type="stmt"/>
+        <line num="153" count="0" type="stmt"/>
+        <line num="154" count="0" type="stmt"/>
+        <line num="156" count="0" type="stmt"/>
+        <line num="183" count="0" type="stmt"/>
+        <line num="185" count="0" type="stmt"/>
+        <line num="186" count="0" type="stmt"/>
+        <line num="193" count="11" type="stmt"/>
+        <line num="194" count="0" type="stmt"/>
+        <line num="195" count="0" type="stmt"/>
+        <line num="199" count="0" type="stmt"/>
+        <line num="201" count="0" type="stmt"/>
+        <line num="202" count="0" type="stmt"/>
       </file>
       <file name="uploadRoutes.js" path="/Users/jessicamorcos/Desktop/Git_projects/Soundset/server/src/routes/uploadRoutes.js">
         <metrics statements="19" coveredstatements="19" conditionals="4" coveredconditionals="4" methods="3" coveredmethods="3"/>
