@@ -5,7 +5,7 @@ import {
   deleteUser,
   getPreferences,
   updatePreferences,
-  promoteUser      // ✅ ADD THIS
+  promoteUser      
 } from "../controllers/userController.js";
 import { authMiddleware, adminOnly } from "../middleware/auth.js";
 

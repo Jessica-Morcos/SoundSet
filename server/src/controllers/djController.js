@@ -2,9 +2,7 @@
 import DjProfile from "../models/DjProfile.js";
 import Playlist from "../models/Playlist.js";
 
-/* -----------------------------------------------------
-   CREATE or UPDATE DJ PROFILE
------------------------------------------------------ */
+
 export const saveDjProfile = async (req, res) => {
   try {
     const existing = await DjProfile.findOne({ user: req.user._id });
@@ -26,9 +24,7 @@ export const saveDjProfile = async (req, res) => {
   }
 };
 
-/* -----------------------------------------------------
-   LIST ALL DJS
------------------------------------------------------ */
+
 export const listDjs = async (_req, res) => {
   try {
     const djs = await DjProfile.find();
@@ -38,9 +34,7 @@ export const listDjs = async (_req, res) => {
   }
 };
 
-/* -----------------------------------------------------
-   GET DJ PROFILE + PUBLIC PLAYLISTS
------------------------------------------------------ */
+
 export const getDjById = async (req, res) => {
   try {
     const profile = await DjProfile.findById(req.params.id);

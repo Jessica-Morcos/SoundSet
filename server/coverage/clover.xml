@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1763259421115" clover="3.2.0">
-  <project timestamp="1763259421115" name="All files">
+<coverage generated="1763317325218" clover="3.2.0">
+  <project timestamp="1763317325218" name="All files">
     <metrics statements="479" coveredstatements="452" conditionals="205" coveredconditionals="180" methods="68" coveredmethods="65" elements="752" coveredelements="697" complexity="0" loc="479" ncloc="479" packages="6" files="21" classes="21"/>
     <package name="src">
       <metrics statements="13" coveredstatements="13" conditionals="2" coveredconditionals="2" methods="3" coveredmethods="3"/>
@@ -55,30 +55,30 @@
       </file>
       <file name="djController.js" path="/Users/jessicamorcos/Desktop/Git_projects/Soundset/server/src/controllers/djController.js">
         <metrics statements="24" coveredstatements="23" conditionals="4" coveredconditionals="4" methods="3" coveredmethods="3"/>
-        <line num="8" count="11" type="stmt"/>
-        <line num="9" count="4" type="stmt"/>
-        <line num="10" count="4" type="stmt"/>
-        <line num="12" count="3" type="cond" truecount="2" falsecount="0"/>
-        <line num="13" count="2" type="stmt"/>
-        <line num="17" count="2" type="stmt"/>
+        <line num="6" count="11" type="stmt"/>
+        <line num="7" count="4" type="stmt"/>
+        <line num="8" count="4" type="stmt"/>
+        <line num="10" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="11" count="2" type="stmt"/>
+        <line num="15" count="2" type="stmt"/>
+        <line num="18" count="1" type="stmt"/>
+        <line num="19" count="1" type="stmt"/>
         <line num="20" count="1" type="stmt"/>
-        <line num="21" count="1" type="stmt"/>
         <line num="22" count="1" type="stmt"/>
-        <line num="24" count="1" type="stmt"/>
-        <line num="25" count="1" type="stmt"/>
-        <line num="32" count="11" type="stmt"/>
-        <line num="33" count="2" type="stmt"/>
-        <line num="34" count="2" type="stmt"/>
-        <line num="35" count="2" type="stmt"/>
-        <line num="37" count="0" type="stmt"/>
-        <line num="44" count="11" type="stmt"/>
-        <line num="45" count="3" type="stmt"/>
-        <line num="46" count="3" type="stmt"/>
-        <line num="47" count="3" type="cond" truecount="2" falsecount="0"/>
-        <line num="49" count="2" type="stmt"/>
-        <line num="54" count="1" type="stmt"/>
-        <line num="56" count="1" type="stmt"/>
-        <line num="57" count="1" type="stmt"/>
+        <line num="23" count="1" type="stmt"/>
+        <line num="28" count="11" type="stmt"/>
+        <line num="29" count="2" type="stmt"/>
+        <line num="30" count="2" type="stmt"/>
+        <line num="31" count="2" type="stmt"/>
+        <line num="33" count="0" type="stmt"/>
+        <line num="38" count="11" type="stmt"/>
+        <line num="39" count="3" type="stmt"/>
+        <line num="40" count="3" type="stmt"/>
+        <line num="41" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="43" count="2" type="stmt"/>
+        <line num="48" count="1" type="stmt"/>
+        <line num="50" count="1" type="stmt"/>
+        <line num="51" count="1" type="stmt"/>
       </file>
       <file name="playlistController.js" path="/Users/jessicamorcos/Desktop/Git_projects/Soundset/server/src/controllers/playlistController.js">
         <metrics statements="76" coveredstatements="64" conditionals="40" coveredconditionals="37" methods="11" coveredmethods="10"/>
