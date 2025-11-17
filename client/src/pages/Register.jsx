@@ -1,38 +1,37 @@
 import { useState } from "react";
 import { registerUser } from "../api/auth";
 import { useNavigate, Link } from "react-router-dom";
-import logo from "../assets/logo.png"; // ✅ Match the same logo import as in Login.jsx
+import toast from "react-hot-toast";
+import logo from "../assets/logo.png";
 
 export default function Register() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
 
     if (password !== confirm) {
-      setError("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
 
     const res = await registerUser({ username, password });
+
     if (res.message === "User registered") {
-      setSuccess("✅ Registration successful! Redirecting to login...");
-      setTimeout(() => navigate("/login"), 1500);
+      toast.success("Registration successful! Redirecting...");
+      setTimeout(() => navigate("/login"), 1200);
     } else {
-      setError(res.message || "Registration failed");
+      toast.error(res.message || "Registration failed");
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1c0f2f] via-[#5b3a9b] to-[#9c7df5] p-6">
       <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl p-10 w-full max-w-md">
+
         {/* Header with logo */}
         <div className="flex flex-col items-center mb-6">
           <img src={logo} alt="Logo" className="h-30 w-auto mb-4" />
@@ -47,30 +46,27 @@ export default function Register() {
             placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9c7df5] outline-none"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9c7df5]"
             required
           />
+
           <input
             type="password"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9c7df5] outline-none"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9c7df5]"
             required
           />
+
           <input
             type="password"
             placeholder="Confirm Password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9c7df5] outline-none"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9c7df5]"
             required
           />
-
-          {error && <p className="text-red-500 text-center text-sm">{error}</p>}
-          {success && (
-            <p className="text-green-500 text-center text-sm">{success}</p>
-          )}
 
           <button
             type="submit"
@@ -87,6 +83,7 @@ export default function Register() {
             Login
           </Link>
         </p>
+
       </div>
     </div>
   );

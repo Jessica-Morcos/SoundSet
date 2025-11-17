@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -11,37 +12,80 @@ export default function AdminUsers() {
   }, [token]);
 
   async function refreshUsers() {
-    const res = await fetch(`${BASE_URL}/users`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setUsers(await res.json());
+    try {
+      const res = await fetch(`${BASE_URL}/users`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setUsers(data);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load users");
+    }
   }
 
   async function toggleActive(id) {
-    await fetch(`${BASE_URL}/users/${id}/toggle`, {
-      method: "PATCH",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    refreshUsers();
+    try {
+      await fetch(`${BASE_URL}/users/${id}/toggle`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Status updated");
+      refreshUsers();
+    } catch {
+      toast.error("Failed to update status");
+    }
   }
 
   async function toggleRole(id) {
-    await fetch(`${BASE_URL}/users/${id}/role`, {
-      method: "PATCH",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    refreshUsers();
+    try {
+      await fetch(`${BASE_URL}/users/${id}/role`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Role updated");
+      refreshUsers();
+    } catch {
+      toast.error("Failed to update role");
+    }
   }
 
   async function handleDelete(id, name) {
-    if (!confirm(`Delete ${name}?`)) return;
+    toast(
+      (t) => (
+        <div>
+          Delete <b>{name}</b>?
+          <div className="flex gap-3 mt-3">
+            <button
+              className="px-3 py-1 bg-red-500 text-white rounded"
+              onClick={async () => {
+                toast.dismiss(t.id);
+                try {
+                  await fetch(`${BASE_URL}/users/${id}`, {
+                    method: "DELETE",
+                    headers: { Authorization: `Bearer ${token}` },
+                  });
+                  toast.success("User deleted");
+                  refreshUsers();
+                } catch {
+                  toast.error("Failed to delete user");
+                }
+              }}
+            >
+              Yes
+            </button>
 
-    await fetch(`${BASE_URL}/users/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    refreshUsers();
+            <button
+              className="px-3 py-1 bg-gray-300 rounded"
+              onClick={() => toast.dismiss(t.id)}
+            >
+              No
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: 6000 }
+    );
   }
 
   return (
@@ -50,9 +94,7 @@ export default function AdminUsers() {
 
       <div className="bg-white text-gray-900 rounded-2xl shadow-xl w-full max-w-6xl mx-auto p-6">
 
-        {/* ✅ MOBILE SAFE SCROLL WRAPPER */}
         <div className="overflow-x-auto">
-
           <table className="min-w-full text-left">
             <thead>
               <tr className="bg-indigo-100 text-indigo-700 font-semibold">
@@ -68,7 +110,6 @@ export default function AdminUsers() {
             <tbody>
               {users.map((u) => (
                 <tr key={u._id} className="border-b">
-
                   <td className="p-3">{u.username}</td>
                   <td className="p-3 capitalize">{u.role}</td>
 
@@ -80,7 +121,6 @@ export default function AdminUsers() {
                     )}
                   </td>
 
-                  {/* ROLE ACTION BUTTON */}
                   <td className="p-3">
                     <button
                       onClick={() => toggleRole(u._id)}
@@ -94,7 +134,6 @@ export default function AdminUsers() {
                     </button>
                   </td>
 
-                  {/* ACTIVE / DEACTIVATE BUTTON */}
                   <td className="p-3">
                     <button
                       onClick={() => toggleActive(u._id)}
@@ -108,7 +147,6 @@ export default function AdminUsers() {
                     </button>
                   </td>
 
-                  {/* DELETE BUTTON */}
                   <td className="p-3">
                     <button
                       onClick={() => handleDelete(u._id, u.username)}
@@ -122,8 +160,8 @@ export default function AdminUsers() {
               ))}
             </tbody>
           </table>
-
         </div>
+
       </div>
     </div>
   );

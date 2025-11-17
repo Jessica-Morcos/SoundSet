@@ -27,17 +27,33 @@ const NAVBAR_HEIGHT = 64;
 /* -------- Timeline Tab -------- */
 const TimelineTab = memo(({ data }) => {
   if (!data?.length)
-    return <p className="text-gray-500">Not enough data yet.</p>;
+    return <p className="text-purple-300">Not enough data yet.</p>;
 
   return (
     <div className="h-60 min-w-0">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" tickFormatter={(d) => new Date(d).toLocaleDateString()} />
-          <YAxis allowDecimals={false} />
-          <Tooltip />
-          <Line type="monotone" dataKey="count" stroke="#6366f1" strokeWidth={2} dot={{ r: 3 }} />
+          <CartesianGrid stroke="#3b2a60" strokeDasharray="3 3" />
+          <XAxis
+            dataKey="date"
+            tick={{ fill: "#d6c8ff" }}
+            tickFormatter={(d) => new Date(d).toLocaleDateString()}
+          />
+          <YAxis tick={{ fill: "#d6c8ff" }} allowDecimals={false} />
+          <Tooltip
+            contentStyle={{
+              background: "#1b1230",
+              border: "1px solid #6b4ec7",
+              color: "white",
+            }}
+          />
+          <Line
+            type="monotone"
+            dataKey="count"
+            stroke="#9c7df5"
+            strokeWidth={2}
+            dot={{ r: 3, fill: "#d6c8ff" }}
+          />
         </LineChart>
       </ResponsiveContainer>
     </div>
@@ -46,20 +62,24 @@ const TimelineTab = memo(({ data }) => {
 
 /* -------- Activity Tab -------- */
 const ActivityTab = memo(({ logs, loading }) => {
-  if (loading) return <p className="text-gray-400">Loading...</p>;
-  if (!logs?.length) return <p className="text-gray-500">No recent activity.</p>;
+  if (loading) return <p className="text-purple-300">Loading...</p>;
+  if (!logs?.length)
+    return <p className="text-purple-300">No recent activity.</p>;
 
   return (
     <div className="space-y-2">
       {logs.map((log, i) => (
-        <div key={i} className="flex justify-between text-xs py-1 border-b">
+        <div
+          key={i}
+          className="flex justify-between text-xs py-2 border-b border-purple-800"
+        >
           <div>
-            <p className="font-semibold">{log.username}</p>
-            <p className="text-gray-500">
+            <p className="font-semibold text-purple-100">{log.username}</p>
+            <p className="text-purple-300">
               {log.lastSongTitle} • {log.lastSongArtist}
             </p>
           </div>
-          <span className="text-gray-400">{formatTimeAgo(log.lastPlayedAt)}</span>
+          <span className="text-purple-400">{formatTimeAgo(log.lastPlayedAt)}</span>
         </div>
       ))}
     </div>
@@ -147,7 +167,7 @@ export default function SongStatsSidebar() {
       {!isStatsOpen && currentSong && (
         <button
           onClick={() => setIsStatsOpen(true)}
-          className="fixed right-4 top-1/2 z-[60] bg-white/90 text-indigo-700 shadow-lg rounded-full p-3 hover:bg-indigo-100"
+          className="fixed right-4 top-1/2 z-[60] bg-purple-900/90 text-purple-100 border border-purple-700 shadow-xl rounded-full p-3 hover:bg-purple-800"
         >
           <BarChart3 size={20} />
         </button>
@@ -160,34 +180,36 @@ export default function SongStatsSidebar() {
             animate={{ x: 0 }}
             exit={{ x: 420 }}
             transition={{ duration: 0.25 }}
-            className="fixed right-0 bg-white text-gray-800 shadow-2xl border-l z-[70] w-[420px] flex flex-col"
+            className="fixed right-0 bg-[#1b1230] text-purple-100 border-l border-purple-700 shadow-2xl w-[420px] flex flex-col z-[70]"
             style={{ top: NAVBAR_HEIGHT, height: `calc(100vh - ${NAVBAR_HEIGHT}px)` }}
           >
             {/* HEADER */}
-            <div className="flex justify-between items-start px-4 py-3 bg-indigo-600 text-white">
+            <div className="flex justify-between items-start px-4 py-3 border-b border-purple-700">
               <div>
-                <p className="text-xs uppercase text-indigo-100">Now Viewing</p>
-                <p className="font-bold">{currentSong?.title}</p>
-                <p className="text-sm">{currentSong?.artist}</p>
+                <p className="text-xs uppercase tracking-wide text-purple-300">
+                  Song Stats
+                </p>
+                <p className="font-bold text-purple-100">{currentSong?.title}</p>
+                <p className="text-sm text-purple-300">{currentSong?.artist}</p>
               </div>
               <button
                 onClick={() => setIsStatsOpen(false)}
-                className="p-1 hover:bg-indigo-500 rounded-full"
+                className="p-1 hover:bg-purple-800 rounded-full"
               >
                 <X size={20} />
               </button>
             </div>
 
             {/* TABS */}
-            <div className="flex border-b text-sm">
+            <div className="flex border-b border-purple-800 text-sm">
               {["overview", "timeline", "activity"].map((t) => (
                 <button
                   key={t}
                   onClick={() => setActiveTab(t)}
                   className={`flex-1 py-2 capitalize ${
                     activeTab === t
-                      ? "border-b-2 border-indigo-600 bg-indigo-50 text-indigo-600"
-                      : "text-gray-500 hover:bg-gray-50"
+                      ? "border-b-2 border-purple-500 bg-purple-900/40 text-purple-200"
+                      : "text-purple-400 hover:bg-purple-900/20"
                   }`}
                 >
                   {t}
@@ -197,7 +219,7 @@ export default function SongStatsSidebar() {
 
             {/* CONTENT */}
             <div className="p-4 overflow-y-auto flex-1">
-              {loading && <p className="text-gray-400">Loading...</p>}
+              {loading && <p className="text-purple-300">Loading...</p>}
 
               {activeTab === "overview" && <Overview overview={overview} />}
               {activeTab === "timeline" && <TimelineTab data={timeline} />}
@@ -214,7 +236,7 @@ export default function SongStatsSidebar() {
 
 function Overview({ overview }) {
   if (!overview?.totalPlays)
-    return <p className="text-gray-500">No plays yet.</p>;
+    return <p className="text-purple-300">No plays yet.</p>;
 
   return (
     <div className="grid grid-cols-2 gap-3">
@@ -226,9 +248,9 @@ function Overview({ overview }) {
 
 function Stat({ label, value }) {
   return (
-    <div className="bg-indigo-50 border rounded-lg p-3">
-      <p className="text-xs text-indigo-500">{label}</p>
-      <p className="text-xl font-bold">{value}</p>
+    <div className="bg-purple-900/40 border border-purple-700 rounded-lg p-3">
+      <p className="text-xs text-purple-300">{label}</p>
+      <p className="text-xl font-bold text-purple-100">{value}</p>
     </div>
   );
 }

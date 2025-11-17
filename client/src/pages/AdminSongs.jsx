@@ -6,6 +6,7 @@ import {
   deleteSong,
   toggleRestricted,
 } from "../api/songs";
+import toast from "react-hot-toast";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -32,14 +33,20 @@ export default function AdminSongs() {
     restricted: "",
   });
 
+  // Load all songs
   useEffect(() => {
     const token = localStorage.getItem("token");
     getAllSongs(token).then((data) => {
+      if (!Array.isArray(data)) {
+        toast.error("Failed to load songs");
+        return;
+      }
       setSongs(data);
       setFiltered(data);
     });
   }, []);
 
+  // Apply filters
   useEffect(() => {
     let result = songs;
     if (filters.genre) result = result.filter((s) => s.genre === filters.genre);
@@ -54,10 +61,12 @@ export default function AdminSongs() {
     setFiltered(result);
   }, [filters, songs]);
 
+  // Upload audio/cover
   const handleFileUpload = async (file, type) => {
     const token = localStorage.getItem("token");
     const formData = new FormData();
     formData.append("file", file);
+
     setUploading(true);
     try {
       const res = await fetch(`${BASE_URL}/upload/${type}`, {
@@ -65,67 +74,136 @@ export default function AdminSongs() {
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
+
       const data = await res.json();
       setUploading(false);
+
+      if (!data.url) {
+        toast.error("Upload failed");
+        return null;
+      }
+
+      toast.success(`${type === "audio" ? "Audio" : "Cover"} uploaded`);
       return data.url;
+
     } catch (err) {
       console.error("Upload failed:", err);
       setUploading(false);
-      alert("Upload failed");
+      toast.error("Upload failed");
+      return null;
     }
   };
 
+  // Add new song
   const handleAddSong = async () => {
-    const token = localStorage.getItem("token");
     if (!newSong.title.trim() || !newSong.audioUrl) {
-      alert("Please enter title and upload audio file.");
+      toast.error("Please enter a title and upload audio.");
       return;
     }
-    const res = await addSong(newSong, token);
-    if (res.song) {
-      setSongs((prev) => [...prev, res.song]);
-      setNewSong({
-        title: "",
-        artist: "",
-        genre: "",
-        year: "",
-        durationSec: "",
-        audioUrl: "",
-        coverUrl: "",
-      });
-      alert("✅ Song added!");
-    } else alert("❌ Failed to add song");
+
+    const token = localStorage.getItem("token");
+    try {
+      const res = await addSong(newSong, token);
+
+      if (res.song) {
+        setSongs((prev) => [...prev, res.song]);
+
+        setNewSong({
+          title: "",
+          artist: "",
+          genre: "",
+          year: "",
+          durationSec: "",
+          audioUrl: "",
+          coverUrl: "",
+        });
+
+        toast.success("Song added!");
+      } else {
+        toast.error("Failed to add song");
+      }
+    } catch (err) {
+      toast.error("Server error while adding song");
+    }
   };
 
+  // Update song
   const handleUpdate = async (song) => {
     const token = localStorage.getItem("token");
-    const res = await updateSong(song._id, song, token);
-    if (res.song) {
-      setSongs((prev) =>
-        prev.map((s) => (s._id === song._id ? res.song : s))
-      );
-      setEditingSong(null);
-      alert("✅ Song updated!");
+
+    try {
+      const res = await updateSong(song._id, song, token);
+      if (res.song) {
+        setSongs((prev) =>
+          prev.map((s) => (s._id === song._id ? res.song : s))
+        );
+        setEditingSong(null);
+        toast.success("Song updated!");
+      } else {
+        toast.error("Failed to update song");
+      }
+    } catch (err) {
+      toast.error("Server error while updating song");
     }
   };
 
+  // Delete song
   const handleDelete = async (id) => {
     const token = localStorage.getItem("token");
-    if (!confirm("Are you sure you want to delete this song?")) return;
-    const res = await deleteSong(id, token);
-    if (res.message) {
-      setSongs((prev) => prev.filter((s) => s._id !== id));
-      alert("🗑️ Song deleted!");
-    }
+
+    toast(
+      (t) => (
+        <span>
+          Delete song?
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
+                try {
+                  const res = await deleteSong(id, token);
+
+                  if (res.message) {
+                    setSongs((prev) => prev.filter((s) => s._id !== id));
+                    toast.success("Song deleted");
+                  }
+                } catch (err) {
+                  toast.error("Failed to delete song");
+                }
+              }}
+              className="bg-red-500 text-white px-3 py-1 rounded"
+            >
+              Yes
+            </button>
+
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="bg-gray-300 px-3 py-1 rounded"
+            >
+              No
+            </button>
+          </div>
+        </span>
+      ),
+      { duration: 6000 }
+    );
   };
 
+  // Toggle restricted
   const handleToggleRestricted = async (id) => {
     const token = localStorage.getItem("token");
-    const res = await toggleRestricted(id, token);
-    if (res.song) {
-      setSongs((prev) =>
-        prev.map((s) => (s._id === id ? res.song : s))
-      );
+    try {
+      const res = await toggleRestricted(id, token);
+
+      if (res.song) {
+        setSongs((prev) =>
+          prev.map((s) => (s._id === id ? res.song : s))
+        );
+        toast.success(res.song.restricted ? "Song restricted" : "Song unlocked");
+      } else {
+        toast.error("Failed to update restriction");
+      }
+    } catch (err) {
+      toast.error("Server error toggling restricted status");
     }
   };
 
@@ -147,11 +225,14 @@ export default function AdminSongs() {
             </option>
             {Array.from(new Set(songs.map((s) => s[key]).filter(Boolean))).map(
               (val) => (
-                <option key={val}>{val}</option>
+                <option key={val} value={val}>
+                  {val}
+                </option>
               )
             )}
           </select>
         ))}
+
         <select
           value={filters.restricted}
           onChange={(e) =>
@@ -165,20 +246,19 @@ export default function AdminSongs() {
         </select>
 
         <button
-          onClick={() =>
-            setFilters({ genre: "", artist: "", year: "", restricted: "" })
-          }
+          onClick={() => {
+            setFilters({ genre: "", artist: "", year: "", restricted: "" });
+            toast.success("Filters reset");
+          }}
           className="bg-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-300"
         >
           Reset Filters
         </button>
       </div>
 
-      {/* Add Song */}
+      {/* Add Song Form */}
       <div className="bg-white text-gray-800 rounded-xl p-6 shadow-lg w-full max-w-3xl mb-8">
-        <h2 className="text-xl font-semibold mb-3 text-indigo-600">
-          Add New Song
-        </h2>
+        <h2 className="text-xl font-semibold mb-3 text-indigo-600">Add New Song</h2>
 
         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
           {["title", "artist", "genre", "year", "durationSec"].map((field) => (
@@ -198,8 +278,10 @@ export default function AdminSongs() {
           ))}
         </div>
 
-        {/* Uploads */}
+        {/* Upload Fields */}
         <div className="mt-4 flex flex-col sm:flex-row gap-4">
+
+          {/* Audio */}
           <div>
             <label className="text-sm font-semibold">Upload Audio</label>
             <input
@@ -209,12 +291,13 @@ export default function AdminSongs() {
                 const file = e.target.files[0];
                 if (file) {
                   const url = await handleFileUpload(file, "audio");
-                  setNewSong({ ...newSong, audioUrl: url });
+                  if (url) setNewSong({ ...newSong, audioUrl: url });
                 }
               }}
             />
           </div>
 
+          {/* Cover */}
           <div>
             <label className="text-sm font-semibold">Upload Cover</label>
             <input
@@ -224,7 +307,7 @@ export default function AdminSongs() {
                 const file = e.target.files[0];
                 if (file) {
                   const url = await handleFileUpload(file, "cover");
-                  setNewSong({ ...newSong, coverUrl: url });
+                  if (url) setNewSong({ ...newSong, coverUrl: url });
                 }
               }}
             />
@@ -235,33 +318,32 @@ export default function AdminSongs() {
           onClick={handleAddSong}
           disabled={uploading}
           className={`mt-6 px-5 py-2 rounded-lg text-white font-semibold ${
-            uploading
-              ? "bg-gray-400"
-              : "bg-indigo-600 hover:bg-indigo-700"
+            uploading ? "bg-gray-400" : "bg-indigo-600 hover:bg-indigo-700"
           }`}
         >
           {uploading ? "Uploading..." : "➕ Add Song"}
         </button>
       </div>
 
-      {/* SONG TABLE */}
+      {/* Song Table */}
       <div className="w-full max-w-6xl overflow-x-auto">
         <table className="w-full bg-white text-gray-800 rounded-xl shadow-lg overflow-hidden">
           <thead className="bg-indigo-600 text-white">
             <tr>
-              <th className="p-3 text-left">Cover</th>
-              <th className="p-3 text-left">Title</th>
-              <th className="p-3 text-left">Artist</th>
-              <th className="p-3 text-left">Genre</th>
-              <th className="p-3 text-left">Year</th>
-              <th className="p-3 text-center">Restricted</th>
-              <th className="p-3 text-center">Actions</th>
+              <th className="p-3">Cover</th>
+              <th className="p-3">Title</th>
+              <th className="p-3">Artist</th>
+              <th className="p-3">Genre</th>
+              <th className="p-3">Year</th>
+              <th className="p-3">Restricted</th>
+              <th className="p-3">Actions</th>
             </tr>
           </thead>
 
           <tbody>
             {filtered.map((song) => (
               <tr key={song._id} className="border-b hover:bg-gray-100">
+
                 <td className="p-3">
                   {song.coverUrl && (
                     <img
@@ -270,6 +352,7 @@ export default function AdminSongs() {
                     />
                   )}
                 </td>
+
                 <td className="p-3">{song.title}</td>
                 <td className="p-3">{song.artist}</td>
                 <td className="p-3">{song.genre}</td>
@@ -279,7 +362,6 @@ export default function AdminSongs() {
                   {song.restricted ? "🔒" : "✅"}
                 </td>
 
-                {/* ⭐⭐ FIXED ACTION BUTTONS ⭐⭐ */}
                 <td className="p-3">
                   <div className="flex flex-wrap gap-2 justify-center">
 
@@ -303,15 +385,17 @@ export default function AdminSongs() {
                     >
                       🗑️
                     </button>
+
                   </div>
                 </td>
+
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      {/* ✏️ EDIT MODAL */}
+      {/* EDIT MODAL */}
       {editingSong && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
           <div className="bg-white text-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-md">
@@ -347,6 +431,7 @@ export default function AdminSongs() {
               >
                 Cancel
               </button>
+
               <button
                 onClick={() => handleUpdate(editingSong)}
                 className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg"
@@ -357,6 +442,7 @@ export default function AdminSongs() {
           </div>
         </div>
       )}
+
     </div>
   );
 }

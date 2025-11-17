@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getAllSongs } from "../api/songs";
 import { createPlaylist } from "../api/playlist";
+import toast from "react-hot-toast";
 
 export default function PlaylistBuilder() {
   const [songs, setSongs] = useState([]);
@@ -17,7 +18,7 @@ export default function PlaylistBuilder() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      console.warn("⚠️ No token in localStorage – user must log in.");
+      toast.error("You must be logged in to view songs");
       return;
     }
 
@@ -29,6 +30,7 @@ export default function PlaylistBuilder() {
       } else {
         setSongs([]);
         setFiltered([]);
+        toast.error("Failed to load songs");
       }
     });
   }, []);
@@ -54,7 +56,7 @@ export default function PlaylistBuilder() {
     setFiltered(result);
   }, [genreFilter, artistFilter, yearFilter, search, songs]);
 
-  // ⭐ Re-add missing toggle function
+  // ⭐ Toggle select
   const toggleSong = (song) => {
     if (selected.find((s) => s._id === song._id)) {
       setSelected(selected.filter((s) => s._id !== song._id));
@@ -63,11 +65,19 @@ export default function PlaylistBuilder() {
     }
   };
 
+  // ⭐ Create playlist
   const handleCreate = async () => {
-    if (!name.trim()) return alert("Please enter a playlist name.");
+    // Playlist name empty
+    if (!name.trim()) {
+      toast.error("Please enter a playlist name");
+      return;
+    }
 
     const token = localStorage.getItem("token");
-    if (!token) return alert("You must be logged in to create a playlist.");
+    if (!token) {
+      toast.error("You must be logged in to create a playlist");
+      return;
+    }
 
     const data = {
       name,
@@ -75,8 +85,21 @@ export default function PlaylistBuilder() {
       songs: selected.map((s, i) => ({ songId: s._id, order: i })),
     };
 
-    const res = await createPlaylist(data, token);
-    alert(res.message || "Playlist created!");
+    try {
+      const res = await createPlaylist(data, token);
+
+      // success
+      if (!res.message?.includes("Failed")) {
+        toast.success("Playlist created!");
+        setName("");
+        setSelected([]);
+      } else {
+        toast.error(res.message || "Failed to create playlist");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Server error while creating playlist");
+    }
   };
 
   const uniqueGenres = [...new Set(songs.map((s) => s.genre).filter(Boolean))];
@@ -97,9 +120,11 @@ export default function PlaylistBuilder() {
       <h1 className="text-4xl font-extrabold mb-4">Create Playlist</h1>
       <p className="text-gray-200 mb-8">Choose songs to build your custom playlist</p>
 
-      {/* Playlist name */}
+      {/* Playlist name + classification */}
       <div className="bg-white text-gray-800 rounded-2xl shadow-lg p-6 w-full max-w-2xl mb-10">
-        <label className="block text-sm font-semibold text-gray-600 mb-2">Playlist Name</label>
+        <label className="block text-sm font-semibold text-gray-600 mb-2">
+          Playlist Name
+        </label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -107,7 +132,9 @@ export default function PlaylistBuilder() {
           className="w-full p-3 border border-gray-300 rounded-lg mb-4"
         />
 
-        <label className="block text-sm font-semibold text-gray-600 mb-2">Classification</label>
+        <label className="block text-sm font-semibold text-gray-600 mb-2">
+          Classification
+        </label>
         <select
           value={classification}
           onChange={(e) => setClassification(e.target.value)}
@@ -175,6 +202,7 @@ export default function PlaylistBuilder() {
             setArtistFilter("");
             setYearFilter("");
             setSearch("");
+            toast.success("Filters reset");
           }}
           className="bg-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-300"
         >
@@ -182,7 +210,7 @@ export default function PlaylistBuilder() {
         </button>
       </div>
 
-      {/* 🔍 Search Bar */}
+      {/* Search */}
       <div className="w-full max-w-5xl mb-6">
         <input
           type="text"
@@ -193,7 +221,7 @@ export default function PlaylistBuilder() {
         />
       </div>
 
-      {/* Songs List */}
+      {/* Songs grid */}
       <div className="w-full max-w-5xl">
         <h2 className="text-2xl font-bold mb-4 text-center">Available Songs</h2>
 

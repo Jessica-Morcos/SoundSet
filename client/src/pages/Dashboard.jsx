@@ -4,8 +4,9 @@ import { getCurrentUser } from "../api/auth";
 import {
   getMyPlaylists,
   deletePlaylist,
-  updatePlaylist,
 } from "../api/playlist";
+
+import toast from "react-hot-toast";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -21,10 +22,15 @@ export default function Dashboard() {
     }
 
     const loadData = async () => {
-      const userData = await getCurrentUser(token);
-      const playlistData = await getMyPlaylists(token);
-      setUser(userData);
-      setPlaylists(playlistData);
+      try {
+        const userData = await getCurrentUser(token);
+        const playlistData = await getMyPlaylists(token);
+
+        setUser(userData);
+        setPlaylists(playlistData);
+      } catch (err) {
+        toast.error("Failed to load dashboard data");
+      }
     };
 
     loadData();
@@ -35,34 +41,74 @@ export default function Dashboard() {
     navigate(`/playlist/${id}`);
   };
 
-  // ✅ Delete playlist
+  // 🔥 Toast-based confirm dialog
+  const confirmDelete = (name) =>
+    new Promise((resolve) => {
+      toast(
+        (t) => (
+          <div className="text-center">
+            <p className="font-semibold text-sm">
+              Delete "{name}"?
+            </p>
+
+            <div className="flex justify-center gap-3 mt-3">
+              <button
+                onClick={() => {
+                  resolve(true);
+                  toast.dismiss(t.id);
+                }}
+                className="bg-red-500 text-white px-3 py-1 rounded"
+              >
+                Delete
+              </button>
+
+              <button
+                onClick={() => {
+                  resolve(false);
+                  toast.dismiss(t.id);
+                }}
+                className="bg-gray-300 px-3 py-1 rounded"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ),
+        { duration: Infinity }
+      );
+    });
+
+  // ❌ Delete playlist with toast notifications
   const handleDelete = async (id, name) => {
     const token = localStorage.getItem("token");
-    const confirmed = confirm(`Are you sure you want to delete "${name}"?`);
+
+    const confirmed = await confirmDelete(name);
     if (!confirmed) return;
 
     try {
       const res = await deletePlaylist(id, token);
+
       if (res.message === "Playlist deleted successfully") {
-        alert(`Playlist "${name}" deleted successfully ✅`);
+        toast.success(`Deleted "${name}"`);
+
         const updated = await getMyPlaylists(token);
         setPlaylists(updated);
       } else {
-        alert(res.message || "Failed to delete playlist ❌");
+        toast.error(res.message || "Failed to delete playlist");
       }
     } catch (err) {
       console.error("Error deleting playlist:", err);
-      alert("Error deleting playlist ❌");
+      toast.error("Server error while deleting playlist");
     }
   };
 
- 
   return (
-    <div className="min-h-screen  text-white flex flex-col items-center p-8 pb-[10rem]">
+    <div className="min-h-screen text-white flex flex-col items-center p-8 pb-[10rem]">
       {/* Welcome Section */}
       <div className="w-full max-w-5xl text-left mb-8">
-        <h1 className="text-4xl font-bold mb-2">Welcome back, {user?.username || "User"} ! </h1>
-       
+        <h1 className="text-4xl font-bold mb-2">
+          Welcome back, {user?.username || "User"} !
+        </h1>
       </div>
 
       {/* Playlists Section */}
@@ -82,7 +128,6 @@ export default function Dashboard() {
                 key={pl._id}
                 className="group relative bg-indigo-100 rounded-xl p-5 shadow-md hover:shadow-lg transition transform hover:scale-[1.02] cursor-pointer"
               >
-                {/* Playlist Info */}
                 <div onClick={() => handleOpenPlaylist(pl._id)}>
                   <h4 className="text-lg font-semibold text-indigo-800 truncate">
                     {pl.name}
@@ -92,11 +137,7 @@ export default function Dashboard() {
                   </p>
                 </div>
 
-                {/* Edit + Delete Buttons */}
                 <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition">
-                  
-                  
-
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
