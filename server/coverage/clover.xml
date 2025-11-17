@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1763332916856" clover="3.2.0">
-  <project timestamp="1763332916856" name="All files">
-    <metrics statements="505" coveredstatements="471" conditionals="207" coveredconditionals="181" methods="72" coveredmethods="69" elements="784" coveredelements="721" complexity="0" loc="505" ncloc="505" packages="6" files="21" classes="21"/>
+<coverage generated="1763343348855" clover="3.2.0">
+  <project timestamp="1763343348855" name="All files">
+    <metrics statements="509" coveredstatements="473" conditionals="213" coveredconditionals="184" methods="73" coveredmethods="69" elements="795" coveredelements="726" complexity="0" loc="509" ncloc="509" packages="6" files="21" classes="21"/>
     <package name="src">
       <metrics statements="13" coveredstatements="13" conditionals="2" coveredconditionals="2" methods="3" coveredmethods="3"/>
       <file name="test-db.js" path="/Users/jessicamorcos/Desktop/Git_projects/Soundset/server/src/test-db.js">
@@ -22,7 +22,7 @@
       </file>
     </package>
     <package name="src.controllers">
-      <metrics statements="291" coveredstatements="266" conditionals="150" coveredconditionals="133" methods="42" coveredmethods="39"/>
+      <metrics statements="295" coveredstatements="268" conditionals="156" coveredconditionals="136" methods="43" coveredmethods="39"/>
       <file name="authController.js" path="/Users/jessicamorcos/Desktop/Git_projects/Soundset/server/src/controllers/authController.js">
         <metrics statements="27" coveredstatements="27" conditionals="8" coveredconditionals="8" methods="3" coveredmethods="3"/>
         <line num="5" count="12" type="stmt"/>
@@ -81,7 +81,7 @@
         <line num="51" count="1" type="stmt"/>
       </file>
       <file name="playlistController.js" path="/Users/jessicamorcos/Desktop/Git_projects/Soundset/server/src/controllers/playlistController.js">
-        <metrics statements="76" coveredstatements="64" conditionals="40" coveredconditionals="37" methods="11" coveredmethods="10"/>
+        <metrics statements="80" coveredstatements="66" conditionals="46" coveredconditionals="40" methods="12" coveredmethods="10"/>
         <line num="4" count="11" type="stmt"/>
         <line num="5" count="11" type="stmt"/>
         <line num="8" count="11" type="stmt"/>
@@ -122,42 +122,46 @@
         <line num="101" count="3" type="stmt"/>
         <line num="104" count="0" type="stmt"/>
         <line num="105" count="0" type="stmt"/>
-        <line num="112" count="11" type="stmt"/>
+        <line num="111" count="11" type="stmt"/>
+        <line num="112" count="7" type="stmt"/>
         <line num="113" count="7" type="stmt"/>
-        <line num="114" count="7" type="stmt"/>
-        <line num="115" count="7" type="cond" truecount="2" falsecount="0"/>
-        <line num="116" count="2" type="stmt"/>
-        <line num="119" count="5" type="cond" truecount="2" falsecount="0"/>
-        <line num="120" count="2" type="stmt"/>
+        <line num="114" count="7" type="cond" truecount="2" falsecount="0"/>
+        <line num="115" count="2" type="stmt"/>
+        <line num="118" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="119" count="2" type="stmt"/>
         <line num="123" count="3" type="stmt"/>
         <line num="127" count="3" type="cond" truecount="2" falsecount="0"/>
         <line num="128" count="2" type="stmt"/>
-        <line num="131" count="1" type="stmt"/>
+        <line num="132" count="1" type="stmt"/>
+        <line num="134" count="1" type="cond" truecount="3" falsecount="1"/>
         <line num="135" count="0" type="stmt"/>
-        <line num="143" count="1" type="stmt"/>
-        <line num="144" count="1" type="stmt"/>
-        <line num="146" count="1" type="stmt"/>
-        <line num="152" count="0" type="stmt"/>
-        <line num="153" count="0" type="stmt"/>
-        <line num="157" count="11" type="stmt"/>
-        <line num="158" count="6" type="stmt"/>
-        <line num="159" count="6" type="stmt"/>
-        <line num="163" count="6" type="cond" truecount="2" falsecount="0"/>
-        <line num="164" count="1" type="stmt"/>
-        <line num="169" count="5" type="cond" truecount="2" falsecount="0"/>
-        <line num="170" count="5" type="cond" truecount="4" falsecount="0"/>
-        <line num="171" count="2" type="stmt"/>
-        <line num="175" count="3" type="stmt"/>
-        <line num="176" count="4" type="cond" truecount="2" falsecount="0"/>
-        <line num="180" count="3" type="stmt"/>
-        <line num="182" count="0" type="stmt"/>
-        <line num="183" count="0" type="stmt"/>
-        <line num="188" count="11" type="stmt"/>
-        <line num="189" count="2" type="stmt"/>
-        <line num="190" count="2" type="stmt"/>
-        <line num="195" count="2" type="stmt"/>
-        <line num="197" count="0" type="stmt"/>
-        <line num="198" count="0" type="stmt"/>
+        <line num="136" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="140" count="1" type="stmt"/>
+        <line num="144" count="0" type="stmt"/>
+        <line num="152" count="1" type="stmt"/>
+        <line num="153" count="1" type="stmt"/>
+        <line num="155" count="1" type="stmt"/>
+        <line num="161" count="0" type="stmt"/>
+        <line num="162" count="0" type="stmt"/>
+        <line num="167" count="11" type="stmt"/>
+        <line num="168" count="6" type="stmt"/>
+        <line num="169" count="6" type="stmt"/>
+        <line num="173" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="174" count="1" type="stmt"/>
+        <line num="179" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="180" count="5" type="cond" truecount="4" falsecount="0"/>
+        <line num="181" count="2" type="stmt"/>
+        <line num="185" count="3" type="stmt"/>
+        <line num="186" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="190" count="3" type="stmt"/>
+        <line num="192" count="0" type="stmt"/>
+        <line num="193" count="0" type="stmt"/>
+        <line num="198" count="11" type="stmt"/>
+        <line num="199" count="2" type="stmt"/>
+        <line num="200" count="2" type="stmt"/>
+        <line num="205" count="2" type="stmt"/>
+        <line num="207" count="0" type="stmt"/>
+        <line num="208" count="0" type="stmt"/>
       </file>
       <file name="songController.js" path="/Users/jessicamorcos/Desktop/Git_projects/Soundset/server/src/controllers/songController.js">
         <metrics statements="86" coveredstatements="77" conditionals="58" coveredconditionals="47" methods="15" coveredmethods="13"/>

@@ -108,7 +108,6 @@ export const togglePublic = async (req, res) => {
 
 
 
-// ✅ Clone a public playlist into the current user's account
 export const clonePlaylist = async (req, res) => {
   try {
     const sourcePlaylist = await Playlist.findById(req.params.id).populate("songs.song");
@@ -120,12 +119,22 @@ export const clonePlaylist = async (req, res) => {
       return res.status(403).json({ message: "This playlist is not public" });
     }
 
+    // Prevent duplicate copies
     const existing = await Playlist.findOne({
       owner: req.user._id,
       name: `${sourcePlaylist.name} (Copy)`,
     });
     if (existing) {
       return res.status(400).json({ message: "You already added this playlist." });
+    }
+
+    // ⭐ RECALCULATE duration if missing or invalid
+    let totalDurationSec = sourcePlaylist.totalDurationSec;
+
+    if (!totalDurationSec || isNaN(totalDurationSec)) {
+      totalDurationSec = sourcePlaylist.songs.reduce((sum, entry) => {
+        return sum + (entry.song?.durationSec || 0);
+      }, 0);
     }
 
     const cloned = new Playlist({
@@ -136,7 +145,7 @@ export const clonePlaylist = async (req, res) => {
         song: entry.song._id,
         order: entry.order,
       })),
-      totalDurationSec: sourcePlaylist.totalDurationSec,
+      totalDurationSec,
       isPublic: false,
     });
 
@@ -153,6 +162,7 @@ export const clonePlaylist = async (req, res) => {
     res.status(500).json({ message: "Failed to clone playlist" });
   }
 };
+
 
 export const getPlaylistById = async (req, res) => {
   try {
