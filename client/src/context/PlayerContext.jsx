@@ -44,18 +44,16 @@ export default function PlayerProvider({ children }) {
     };
   }, []);
 
-  // ▶ play a song (optionally within a playlist)
+  // ▶ play a song
   const playSong = async (song, list = []) => {
     const audio = audioRef.current;
 
-    // if a playlist is passed, treat it as the active context
     if (Array.isArray(list) && list.length) {
       setPlaylist(list);
       const i = list.findIndex((s) => s._id === song._id);
       setCurrentIndex(i >= 0 ? i : 0);
 
-      // whenever you start a brand-new playlist, wipe the old queue
-      setQueue([]);
+      setQueue([]); // wipe queue if switching playlists
     }
 
     if (!currentSong || currentSong._id !== song._id) {
@@ -67,7 +65,6 @@ export default function PlayerProvider({ children }) {
     audio.play();
     setIsPlaying(true);
 
-    // log play for stats
     const token = localStorage.getItem("token");
     if (token && song?._id) {
       try {
@@ -97,7 +94,17 @@ export default function PlayerProvider({ children }) {
     setProgress(t);
   };
 
-  // 🔥 NEW: queue helpers
+  // ⭐ NEW: reorder queue (drag & drop)
+  const reorderQueue = (fromIndex, toIndex) => {
+    setQueue((prev) => {
+      const updated = [...prev];
+      const [moved] = updated.splice(fromIndex, 1);
+      updated.splice(toIndex, 0, moved);
+      return updated;
+    });
+  };
+
+  // queue helpers
   const addToQueue = (song) => {
     if (!song || !song._id) return;
     setQueue((prev) => [...prev, song]);
@@ -109,17 +116,15 @@ export default function PlayerProvider({ children }) {
 
   const clearQueue = () => setQueue([]);
 
-  // ⏭ nextSong: queue first, then playlist
+  // next/prev logic
   const nextSong = () => {
-    // 1) if there is a queue, consume it first
     if (queue.length > 0) {
       const [next, ...rest] = queue;
       setQueue(rest);
-      playSong(next); // do NOT touch playlist index
+      playSong(next);
       return;
     }
 
-    // 2) otherwise fall back to playlist behaviour
     if (!playlist.length) return;
 
     const next = currentIndex + 1;
@@ -149,7 +154,6 @@ export default function PlayerProvider({ children }) {
     setDuration(0);
     setIsFullscreen(false);
 
-    // reset queue as well
     setQueue([]);
     setIsQueueOpen(false);
   };
@@ -157,7 +161,6 @@ export default function PlayerProvider({ children }) {
   return (
     <PlayerContext.Provider
       value={{
-        // core state
         currentSong,
         playlist,
         currentIndex,
@@ -167,15 +170,14 @@ export default function PlayerProvider({ children }) {
         isFullscreen,
         setIsFullscreen,
 
-        // queue state
         queue,
         addToQueue,
         removeFromQueue,
         clearQueue,
+        reorderQueue,  
         isQueueOpen,
         setIsQueueOpen,
 
-        // controls
         playSong,
         togglePlay,
         seek,

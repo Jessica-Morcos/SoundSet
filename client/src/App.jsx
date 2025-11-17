@@ -77,9 +77,9 @@ export default function App() {
         {/* player + queue context */}
         <PlayerProvider>
           <AppContent />
-          <PlayerBar />
-          <SongStatsSidebar />
-          <QueueSidebar />
+          <PlayerBar /> 
+          <SongStatsSidebar />  
+           <QueueSidebar /> 
         </PlayerProvider>
       </SidebarProvider>
     </BrowserRouter>

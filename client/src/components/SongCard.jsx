@@ -1,6 +1,7 @@
 // src/components/SongCard.jsx
 import { useContext } from "react";
 import { PlayerContext } from "../context/PlayerContext";
+import { Play, ListPlus } from "lucide-react";
 
 export default function SongCard({ song, isSelected, onSelect }) {
   const { playSong, addToQueue } = useContext(PlayerContext);
@@ -33,19 +34,28 @@ export default function SongCard({ song, isSelected, onSelect }) {
       </p>
 
       <div className="mt-3 flex gap-2">
-        <button
-          onClick={handlePlay}
-          className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition"
-        >
-          ▶ Play
-        </button>
+        <div className="mt-3 flex gap-2">
 
-        <button
-          onClick={handleAddToQueue}
-          className="px-3 py-2 border border-indigo-400 text-indigo-700 text-xs rounded-lg hover:bg-indigo-50 transition"
-        >
-          + Add to Queue
-        </button>
+          {/* Play */}
+          <button
+            onClick={handlePlay}
+            className="flex items-center gap-1 px-3 py-1 rounded-full border border-indigo-500 text-indigo-600 hover:bg-indigo-50 transition"
+          >
+            <Play size={16} />
+            <span className="text-xs font-medium">Play</span>
+          </button>
+
+          {/* Queue */}
+          <button
+            onClick={handleAddToQueue}
+            className="flex items-center gap-1 px-3 py-1 rounded-full border border-purple-500 text-purple-600 hover:bg-purple-50 transition"
+          >
+            <ListPlus size={16} />
+            <span className="text-xs font-medium">Queue</span>
+          </button>
+
+        </div>
+
       </div>
     </div>
   );

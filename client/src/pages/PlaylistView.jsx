@@ -7,6 +7,9 @@ import toast from "react-hot-toast";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { PlayerContext } from "../context/PlayerContext";
 
+// ⭐ Lucide icons
+import { Play, ListPlus,Plus, X, Clock, Trash2, Edit3, Check } from "lucide-react";
+
 export default function PlaylistView() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -26,8 +29,7 @@ export default function PlaylistView() {
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const { playSong, addToQueue } = useContext(PlayerContext);
 
-
-  // Get user (role + id)
+  // Fetch user info
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -62,14 +64,14 @@ export default function PlaylistView() {
       });
   }, [id, navigate]);
 
-  // keep selectedSongs in sync if playlist.songs gets refreshed externally
+  // Sync selected songs if playlist updates
   useEffect(() => {
     if (playlist?.songs) {
       setSelectedSongs(playlist.songs.map((s) => s.song._id));
     }
   }, [playlist?._id, playlist?.songs?.length]);
 
-  // Save edits (owner only)
+  // Save playlist
   const handleSaveChanges = async () => {
     const token = localStorage.getItem("token");
     toast.loading("Saving changes...");
@@ -84,6 +86,7 @@ export default function PlaylistView() {
         token
       );
       toast.dismiss();
+
       if (res.message === "Playlist updated successfully") {
         toast.success("Playlist updated successfully!");
         setPlaylist(res.playlist);
@@ -93,12 +96,11 @@ export default function PlaylistView() {
       }
     } catch (err) {
       toast.dismiss();
-      console.error(err);
       toast.error("Error updating playlist");
     }
   };
 
-  // Delete (owner only)
+  // Delete playlist
   const confirmDelete = async () => {
     const token = localStorage.getItem("token");
     toast.loading("Deleting playlist...");
@@ -110,13 +112,13 @@ export default function PlaylistView() {
         setShowDeleteModal(false);
         setTimeout(() => navigate("/dashboard"), 800);
       } else toast.error(res.message || "Failed to delete playlist");
-    } catch (err) {
+    } catch {
       toast.dismiss();
       toast.error("Error deleting playlist");
     }
   };
 
-  // Publish (DJ/Admin only)
+  // Publish/unpublish playlist
   const handleTogglePublish = async () => {
     const token = localStorage.getItem("token");
     toast.loading("Updating visibility...");
@@ -139,7 +141,7 @@ export default function PlaylistView() {
     }
   };
 
-  // Clone (for non-owners)
+  // Clone playlist
   const handleClonePlaylist = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -182,7 +184,6 @@ export default function PlaylistView() {
     (userId && playlist.owner?._id === userId) ||
     (playlist.owner && playlist.owner === userId);
 
-  // Filters
   const filteredSongs = songs.filter((song) => {
     return (
       (!genreFilter || song.genre === genreFilter) &&
@@ -198,7 +199,8 @@ export default function PlaylistView() {
   return (
     <div className="min-h-screen text-white flex flex-col items-center py-10 px-6 pb-[10rem]">
       <div className="bg-white text-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-3xl relative">
-        {/* Header */}
+
+        {/* HEADER */}
         <div className="flex justify-between items-center mb-4">
           {isEditing ? (
             <input
@@ -219,15 +221,17 @@ export default function PlaylistView() {
               <>
                 <button
                   onClick={() => setIsEditing(!isEditing)}
-                  className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-white rounded-lg"
+                  className="flex items-center gap-1 px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-white rounded-lg"
                 >
+                  {isEditing ? <X size={18} /> : <Edit3 size={18} />}
                   {isEditing ? "Cancel" : "Edit"}
                 </button>
 
                 <button
                   onClick={() => setShowDeleteModal(true)}
-                  className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg"
+                  className="flex items-center gap-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg"
                 >
+                  <Trash2 size={18} />
                   Delete
                 </button>
 
@@ -248,9 +252,10 @@ export default function PlaylistView() {
               !playlist.name.endsWith("(Copy)") && (
                 <button
                   onClick={handleClonePlaylist}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
+                  className="flex items-center gap-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
                 >
-                  ➕ Add to My Playlists
+                  <Plus size={18} />
+                  Add to My Playlists
                 </button>
               )
             )}
@@ -273,20 +278,20 @@ export default function PlaylistView() {
                   key={i}
                   className="flex justify-between items-center py-3 px-4 hover:bg-gray-100 rounded-lg transition"
                 >
-                  {/* LEFT SIDE: Song info */}
                   <div>
                     <p className="font-semibold text-gray-800">
-                      {entry.song?.title || "Untitled Song"}
+                      {entry.song?.title}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {entry.song?.artist || "Unknown Artist"}
+                      {entry.song?.artist}
                     </p>
                   </div>
 
-                  {/* RIGHT SIDE: Duration + Queue + Play */}
                   <div className="flex items-center gap-3">
+
                     {/* Duration */}
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-gray-400 flex items-center gap-1">
+                      <Clock size={14} />
                       {entry.song?.durationSec
                         ? `${Math.floor(entry.song.durationSec / 60)}:${String(
                             entry.song.durationSec % 60
@@ -294,12 +299,15 @@ export default function PlaylistView() {
                         : ""}
                     </p>
 
-                    {/* ADD TO QUEUE */}
+                    {/* QUEUE */}
                     <button
-                      onClick={() => addToQueue(entry.song)}
-                      className="px-3 py-2 bg-purple-500 hover:bg-purple-600 text-white text-sm rounded-lg transition"
+                      onClick={() => {
+                        addToQueue(entry.song);
+                        toast.success(`Added "${entry.song.title}" to queue`);
+                      }}
+                       className="w-8 h-8 rounded-full border border-purple-500 text-purple-600 hover:bg-purple-50 flex items-center justify-center"
                     >
-                      ➕ Queue
+                      <ListPlus size={18} />
                     </button>
 
                     {/* PLAY */}
@@ -310,18 +318,16 @@ export default function PlaylistView() {
                           playlist.songs.map((s) => s.song)
                         )
                       }
-                      className="px-3 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition"
+                      className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100"
                     >
-                      ▶ Play
+                      <Play size={16} />
                     </button>
                   </div>
                 </li>
               ))}
             </ul>
-
           </>
         ) : (
-          /* EDIT MODE */
           <>
             {/* Classification */}
             <div className="mb-4">
@@ -398,7 +404,7 @@ export default function PlaylistView() {
               </button>
             </div>
 
-            {/* Reorder current playlist */}
+            {/* REORDER CURRENT PLAYLIST */}
             <h3 className="text-lg font-semibold mb-2">Your Playlist</h3>
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId="playlist-songs">
@@ -423,11 +429,13 @@ export default function PlaylistView() {
                               <span>🎵 {song.title} — {song.artist}</span>
                               <button
                                 onClick={() =>
-                                  setSelectedSongs((prev) => prev.filter((sid) => sid !== id))
+                                  setSelectedSongs((prev) =>
+                                    prev.filter((sid) => sid !== id)
+                                  )
                                 }
-                                className="text-red-500 font-bold"
+                                className="text-red-500 hover:text-red-600"
                               >
-                                ✕
+                                <X size={18} />
                               </button>
                             </div>
                           )}
@@ -440,7 +448,7 @@ export default function PlaylistView() {
               </Droppable>
             </DragDropContext>
 
-            {/* Add songs */}
+            {/* ADD SONGS */}
             <h3 className="text-lg font-semibold mb-2">Add Songs</h3>
             <div className="max-h-64 overflow-y-auto border p-3 rounded-lg mb-4">
               {filteredSongs.map((song) => {
@@ -448,9 +456,9 @@ export default function PlaylistView() {
                 return (
                   <div
                     key={song._id}
-                    className={`flex justify-between items-center py-2 px-3 rounded-md mb-1 transition ${
-                      already ? "bg-gray-200 opacity-70 cursor-not-allowed" : "hover:bg-gray-100"
-                    }`}
+                    className={`flex justify-between items-center py-2 px-3 rounded-md mb-1 transition
+                      ${already ? "bg-gray-200 opacity-70 cursor-not-allowed" : "hover:bg-gray-100"}
+                    `}
                   >
                     <span>{song.title} — {song.artist}</span>
                     {!already && (
@@ -473,8 +481,9 @@ export default function PlaylistView() {
             <div className="text-center">
               <button
                 onClick={handleSaveChanges}
-                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
+                className="flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
               >
+                <Check size={18} />
                 Save Changes
               </button>
             </div>
@@ -482,7 +491,7 @@ export default function PlaylistView() {
         )}
       </div>
 
-      {/* Delete Modal */}
+      {/* DELETE MODAL */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center">

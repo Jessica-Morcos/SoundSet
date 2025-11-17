@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import { ListPlus } from "lucide-react";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -81,11 +82,13 @@ export default function DiscoverProfile() {
               </p>
 
               <button
-                onClick={() => handleClonePlaylist(pl._id)}
-                className="bg-indigo-600 text-white w-full py-2 rounded-lg hover:bg-indigo-700 transition"
-              >
-                ➕ Add to My Playlists
-              </button>
+                  onClick={() => handleClonePlaylist(pl._id)}
+                  className="flex items-center justify-center gap-2 w-full py-2 rounded-lg border border-indigo-500 text-indigo-600 hover:bg-indigo-50 transition"
+                >
+                  <ListPlus size={18} />
+                  <span className="font-medium text-sm">Add to My Playlists</span>
+                </button>
+
             </div>
           ))}
         </div>
