@@ -97,17 +97,14 @@ export default function PlaylistBuilder() {
     };
 
     try {
-      const res = await createPlaylist(data, token);
+  await createPlaylist(data, token);
+  toast.success("Playlist created!");
+  setName("");
+  setSelected([]);
+} catch (err) {
+  toast.error(err.message);
+}
 
-      if (!res.message?.includes("Failed")) {
-        toast.success("Playlist created!");
-        setName("");
-        setSelected([]);
-      } else toast.error(res.message || "Failed to create playlist");
-    } catch (err) {
-      console.error(err);
-      toast.error("Server error while creating playlist");
-    }
   };
 
   const uniqueGenres = [...new Set(songs.map((s) => s.genre).filter(Boolean))];

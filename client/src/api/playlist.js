@@ -9,7 +9,20 @@ export async function createPlaylist(data, token) {
     },
     body: JSON.stringify(data),
   });
-  return res.json();
+
+  let json;
+  try {
+    json = await res.json();
+  } catch {
+    throw new Error("Server returned invalid JSON");
+  }
+
+  if (!res.ok) {
+  
+    throw new Error(json.message || "Failed to create playlist");
+  }
+
+  return json;
 }
 
 export async function getMyPlaylists(token) {

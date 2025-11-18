@@ -24,6 +24,8 @@ export default function Login() {
     } else {
       toast.error(res.message || "Invalid username or password");
     }
+   
+
   };
 
   return (
