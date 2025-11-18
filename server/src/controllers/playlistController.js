@@ -32,7 +32,7 @@ export const createPlaylist = async (req, res) => {
     if (totalDurationSec < MIN_SEC || totalDurationSec > MAX_SEC) {
       return res
         .status(400)
-        .json({ message: "Playlist must be between 1 and 3 hours." });
+        .json({ message: "Playlists can only be a maximum of 3 hours." });
     }
 
     const playlist = await Playlist.create({
